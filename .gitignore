@@ -1,0 +1,15 @@
+# Dependency directories
+node_modules/
+dist/
+
+# Local env files and secrets
+.env
+.env.local
+.dev.vars
+
+# Cloudflare Wrangler Cache
+.wrangler/
+
+# System Files
+.DS_Store
+Thumbs.db
