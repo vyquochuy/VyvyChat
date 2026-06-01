@@ -4,7 +4,7 @@
  */
 
 // --- CONFIGURATION ---
-const BACKEND_URL = 'http://localhost:8787';
+const BACKEND_URL = 'https://aero-verify.myvault-service.workers.dev';
 
 // --- DOM ELEMENTS ---
 // Steps/Views
@@ -73,7 +73,7 @@ function setupEventListeners() {
 // --- NAVIGATION SYSTEM ---
 function navigateToStep(targetStep) {
   const allSteps = [stepEmail, stepOtp, stepSuccess];
-  
+
   // Add active state to verification card for transition effect
   verificationCard.style.transform = 'scale(0.98)';
   setTimeout(() => {
@@ -145,9 +145,9 @@ async function handleEmailSubmit(e) {
     if (response.ok) {
       state.email = emailVal;
       displayEmail.textContent = maskEmail(emailVal);
-      
+
       showToast('Gửi OTP thành công! Vui lòng kiểm tra email.', 'success');
-      
+
       // Reset OTP values & Navigate to Step 2
       otpInputs.forEach(input => {
         input.value = '';
@@ -156,7 +156,7 @@ async function handleEmailSubmit(e) {
 
       navigateToStep(stepOtp);
       setTimeout(() => otpInputs[0].focus(), 400); // Focus first box after transition
-      
+
       // Start 5-Minute (300 seconds) Countdown
       startCountdown(300);
     } else {
@@ -185,10 +185,10 @@ function setupOtpInputHandlers() {
     // 1. Prevent typing anything except integers
     input.addEventListener('input', (e) => {
       const val = e.target.value;
-      
+
       // Ensure only numeric digits
       e.target.value = val.replace(/[^0-9]/g, '');
-      
+
       // Clear error styling on input
       input.classList.remove('error');
       otpError.style.display = 'none';
@@ -233,25 +233,25 @@ function setupOtpInputHandlers() {
     input.addEventListener('paste', (e) => {
       e.preventDefault();
       const pasteData = (e.clipboardData || window.clipboardData).getData('text');
-      
+
       // Filter out non-numeric characters and trim to length 6
       const digits = pasteData.replace(/[^0-9]/g, '').slice(0, 6);
-      
+
       if (digits.length > 0) {
         // Disperse digits across inputs starting from the current index or from the beginning
         let startIdx = 0; // Paste from first box is cleanest UX
-        
+
         for (let i = 0; i < digits.length; i++) {
           if (startIdx + i < otpInputs.length) {
             otpInputs[startIdx + i].value = digits[i];
             otpInputs[startIdx + i].classList.remove('error');
           }
         }
-        
+
         // Focus the appropriate input
         const nextFocusIdx = Math.min(startIdx + digits.length, otpInputs.length - 1);
         otpInputs[nextFocusIdx].focus();
-        
+
         if (digits.length === 6) {
           btnVerifyOtp.focus();
         }
@@ -265,7 +265,7 @@ function startCountdown(seconds) {
   clearInterval(state.timerInterval);
   state.secondsRemaining = seconds;
   state.isTimerRunning = true;
-  
+
   // Resend code states
   btnResendOtp.disabled = true;
   btnVerifyOtp.disabled = false;
@@ -279,11 +279,11 @@ function startCountdown(seconds) {
     if (state.secondsRemaining <= 0) {
       clearInterval(state.timerInterval);
       state.isTimerRunning = false;
-      
+
       // Enable resending OTP
       btnResendOtp.disabled = false;
       resendTimerSpan.textContent = '';
-      
+
       // Disable verify since current code is expired
       btnVerifyOtp.disabled = true;
       showToast('Mã xác thực đã hết hạn. Vui lòng bấm gửi lại!', 'error');
@@ -294,17 +294,17 @@ function startCountdown(seconds) {
 function updateTimerDisplay() {
   const minutes = Math.floor(state.secondsRemaining / 60);
   const seconds = state.secondsRemaining % 60;
-  
+
   const minStr = String(minutes).padStart(2, '0');
   const secStr = String(seconds).padStart(2, '0');
-  
+
   otpTimer.textContent = `${minStr}:${secStr}`;
-  
+
   // Resend button text updates
   if (state.isTimerRunning) {
     resendTimerSpan.textContent = `(${state.secondsRemaining}s)`;
   }
-  
+
   // Visual warning colors under 1 minute
   if (state.secondsRemaining < 60) {
     otpTimer.classList.add('warning');
@@ -316,7 +316,7 @@ function updateTimerDisplay() {
 // --- OTP SUBMISSION & VERIFICATION ---
 async function handleOtpSubmit(e) {
   e.preventDefault();
-  
+
   // Combine individual digits
   const otpCode = otpInputs.map(input => input.value).join('');
 
@@ -354,9 +354,9 @@ async function handleOtpSubmit(e) {
       otpInputs.forEach(input => input.classList.add('error'));
       otpError.textContent = data.detail || 'Mã OTP không chính xác hoặc đã hết hạn.';
       otpError.style.display = 'flex';
-      
+
       showToast(otpError.textContent, 'error');
-      
+
       // Auto-clear inputs & focus first box to try again
       setTimeout(() => {
         otpInputs.forEach(input => input.value = '');
@@ -374,7 +374,7 @@ async function handleOtpSubmit(e) {
 // --- ACTION BUTTON ACTIONS ---
 async function handleResendOtp() {
   if (state.isTimerRunning) return;
-  
+
   btnResendOtp.disabled = true;
   resendTimerSpan.textContent = '(gửi...)';
 
@@ -389,14 +389,14 @@ async function handleResendOtp() {
 
     if (response.ok) {
       showToast('Mã OTP mới đã được gửi thành công!', 'success');
-      
+
       // Reset OTP boxes
       otpInputs.forEach(input => {
         input.value = '';
         input.classList.remove('error');
       });
       otpInputs[0].focus();
-      
+
       // Restart 5 min timer
       startCountdown(300);
     } else {
@@ -422,10 +422,10 @@ function resetApp() {
   state.email = '';
   clearInterval(state.timerInterval);
   state.isTimerRunning = false;
-  
+
   emailInput.value = '';
   btnClearEmail.style.display = 'none';
-  
+
   navigateToStep(stepEmail);
   setTimeout(() => emailInput.focus(), 400);
 }
@@ -447,7 +447,7 @@ function setLoadingState(isLoading, btn, spinner, ...disabledInputs) {
 function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-  
+
   toast.innerHTML = `
     <span class="toast-message">${message}</span>
     <button class="toast-close" aria-label="Close message">

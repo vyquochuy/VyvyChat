@@ -8,11 +8,11 @@
   --bg-card-border: rgba(255, 255, 255, 0.08);
   --bg-input: rgba(255, 255, 255, 0.04);
   --bg-input-focus: rgba(255, 255, 255, 0.08);
-  
+
   --text-primary: #ffffff;
   --text-secondary: #9aa1b1;
   --text-muted: #5e6575;
-  
+
   /* Brand Accent Colors */
   --color-purple: #8a2be2;
   --color-purple-glow: rgba(138, 43, 226, 0.4);
@@ -23,14 +23,14 @@
   --color-success-glow: rgba(57, 255, 20, 0.25);
   --color-error: #ff3366;
   --color-error-glow: rgba(255, 51, 102, 0.25);
-  
+
   /* Dimensions & Typography */
   --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --radius-card: 24px;
   --radius-button: 14px;
   --radius-input: 12px;
-  
+
   /* Transitions */
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -81,7 +81,7 @@ body {
 .glow-circle-1 {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, var(--color-purple) 0%, rgba(0,0,0,0) 70%);
+  background: radial-gradient(circle, var(--color-purple) 0%, rgba(0, 0, 0, 0) 70%);
   top: -100px;
   right: -100px;
   animation: floatGlow1 20s infinite alternate ease-in-out;
@@ -90,20 +90,30 @@ body {
 .glow-circle-2 {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, #3b82f6 0%, rgba(0,0,0,0) 70%);
+  background: radial-gradient(circle, #3b82f6 0%, rgba(0, 0, 0, 0) 70%);
   bottom: -200px;
   left: -150px;
   animation: floatGlow2 25s infinite alternate ease-in-out;
 }
 
 @keyframes floatGlow1 {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-80px, 120px) scale(1.15); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  100% {
+    transform: translate(-80px, 120px) scale(1.15);
+  }
 }
 
 @keyframes floatGlow2 {
-  0% { transform: translate(0, 0) scale(1.1); }
-  100% { transform: translate(120px, -100px) scale(0.9); }
+  0% {
+    transform: translate(0, 0) scale(1.1);
+  }
+
+  100% {
+    transform: translate(120px, -100px) scale(0.9);
+  }
 }
 
 /* ==========================================================================
@@ -122,8 +132,15 @@ body {
 }
 
 @keyframes fadeInApp {
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .app-header {
@@ -136,8 +153,10 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  -webkit-user-select: none;
   user-select: none;
 }
+
 
 .logo-icon {
   width: 44px;
@@ -156,7 +175,7 @@ body {
   content: '';
   position: absolute;
   inset: -1px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 60%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 60%);
   border-radius: 12px;
   pointer-events: none;
 }
@@ -181,10 +200,10 @@ body {
   border: 1px solid var(--bg-card-border);
   border-radius: var(--radius-card);
   padding: 40px 32px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 
-              inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(18px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   position: relative;
   overflow: hidden;
   transition: transform var(--transition-normal);
@@ -205,9 +224,22 @@ body {
 }
 
 @keyframes slideStepIn {
-  0% { display: none; opacity: 0; transform: translateY(20px); }
-  1% { display: flex; opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    display: none;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  1% {
+    display: flex;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .step-icon-header {
@@ -221,7 +253,7 @@ body {
   align-items: center;
   color: var(--color-cyan);
   margin-bottom: 24px;
-  box-shadow: inset 0 2px 4px rgba(255,255,255,0.02);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.02);
 }
 
 .step-title {
@@ -307,7 +339,7 @@ body {
   box-shadow: 0 0 0 4px var(--color-purple-glow);
 }
 
-#email-input:focus + .input-icon,
+#email-input:focus+.input-icon,
 .input-wrapper:focus-within .input-icon {
   color: var(--color-purple);
 }
@@ -329,7 +361,7 @@ body {
 
 .input-clear-btn:hover {
   color: var(--text-primary);
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .error-message {
@@ -343,10 +375,27 @@ body {
 }
 
 @keyframes shakeError {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-  40%, 60% { transform: translate3d(4px, 0, 0); }
+
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
 }
 
 /* ==========================================================================
@@ -368,7 +417,7 @@ body {
   align-items: center;
   gap: 10px;
   box-shadow: 0 10px 25px rgba(99, 102, 241, 0.25),
-              inset 0 1px 0 rgba(255,255,255,0.2);
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
@@ -381,7 +430,7 @@ body {
   left: -50%;
   width: 200%;
   height: 100%;
-  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 100%);
   transform: skewX(-25deg);
   transition: 0.75s ease;
 }
@@ -389,7 +438,7 @@ body {
 .submit-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 14px 30px rgba(99, 102, 241, 0.4),
-              0 0 0 2px var(--color-purple);
+    0 0 0 2px var(--color-purple);
 }
 
 .submit-btn:hover::after {
@@ -417,14 +466,16 @@ body {
   display: none;
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255,255,255,0.2);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   border-top-color: var(--text-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ==========================================================================
@@ -455,8 +506,13 @@ body {
 }
 
 @keyframes pulseTimer {
-  0% { box-shadow: 0 0 4px rgba(255, 51, 102, 0); }
-  100% { box-shadow: 0 0 10px rgba(255, 51, 102, 0.15); }
+  0% {
+    box-shadow: 0 0 4px rgba(255, 51, 102, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.15);
+  }
 }
 
 .otp-inputs-container {
@@ -480,7 +536,7 @@ body {
   text-align: center;
   outline: none;
   transition: all var(--transition-normal);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .otp-input:hover {
@@ -567,8 +623,15 @@ body {
 }
 
 @keyframes pulseRing {
-  0% { transform: scale(0.85); opacity: 1; }
-  100% { transform: scale(1.3); opacity: 0; }
+  0% {
+    transform: scale(0.85);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
 }
 
 .success-icon {
@@ -581,13 +644,18 @@ body {
   align-items: center;
   color: var(--text-primary);
   box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4),
-              0 0 0 4px rgba(16, 185, 129, 0.15);
+    0 0 0 4px rgba(16, 185, 129, 0.15);
   animation: scaleSuccess 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes scaleSuccess {
-  0% { transform: scale(0); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .success-btn {
@@ -597,7 +665,7 @@ body {
 
 .success-btn:hover {
   box-shadow: 0 14px 30px rgba(16, 185, 129, 0.4),
-              0 0 0 2px var(--color-success);
+    0 0 0 2px var(--color-success);
 }
 
 /* ==========================================================================
@@ -607,6 +675,7 @@ body {
   font-size: 12.5px;
   color: var(--text-muted);
   text-align: center;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -632,8 +701,8 @@ body {
   border-radius: 12px;
   padding: 16px 20px;
   color: var(--text-primary);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   display: flex;
   justify-content: space-between;
@@ -652,7 +721,9 @@ body {
 }
 
 @keyframes slideToastIn {
-  to { transform: translateX(0); }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .toast.slide-out {
@@ -660,7 +731,10 @@ body {
 }
 
 @keyframes slideToastOut {
-  to { transform: translateX(120%); opacity: 0; }
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
 }
 
 .toast-message {
@@ -684,7 +758,7 @@ body {
 
 .toast-close:hover {
   color: var(--text-primary);
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* ==========================================================================
@@ -695,19 +769,19 @@ body {
     padding: 16px;
     gap: 20px;
   }
-  
+
   .verification-card {
     padding: 32px 20px;
   }
-  
+
   .step-title {
     font-size: 22px;
   }
-  
+
   .otp-inputs-container {
     gap: 6px;
   }
-  
+
   .otp-input {
     width: calc((100% - 30px) / 6);
     height: 48px;

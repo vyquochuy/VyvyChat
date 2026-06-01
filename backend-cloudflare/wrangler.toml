@@ -1,4 +1,4 @@
-name = "account-manager-backend"
+name = "aero-verify"
 main = "src/index.ts"
 compatibility_date = "2024-05-12"
 
@@ -6,8 +6,9 @@ compatibility_date = "2024-05-12"
 # local dev will automatically create a local mock file for OTP_KV
 [[kv_namespaces]]
 binding = "OTP_KV"
-id = "13ac87ee4dd8484faafc9613dce6a795" # ID thực tế của KV trên Cloudflare Dashboard
+id = "f022900d89634595b907cd66c5fe7953" # ID thực tế của KV trên Cloudflare Dashboard
 
 [vars]
 # GAS_WEBHOOK_URL được đưa vào env vars (hoặc có thể dùng wrangler secrets trong production)
-# GAS_WEBHOOK_URL = ""
+GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbySoZ9x17nId11aaEEshi6uHrg908JkCxqytnhnkmmsjBJuEWCwxdVFIlo3Q-RBoOYy/exec"
+ 
