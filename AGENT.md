@@ -1,203 +1,74 @@
-# Tài Liệu Đặc Tả & Hướng Dẫn Phát Triển (AGENT.md)
+# Hướng Dẫn Kiến Trúc Chung & Quy Tắc Agent (AGENT.md)
 
-Tài liệu này cung cấp thông tin đặc tả hệ thống, kiến trúc ứng dụng, cấu trúc dữ liệu, và hướng dẫn chi tiết dành cho các lập trình viên hoặc AI Agent tham gia phát triển, bảo trì ứng dụng **Xác thực Email bằng mã OTP**.
+Tài liệu này định nghĩa các luật kiến trúc chung và nguyên tắc phát triển bắt buộc dành cho bất kỳ AI Agent hoặc Lập trình viên nào tham gia phát triển dự án **VivyChat** (Realtime Chat & File Sharing System).
+
+---
+## 0. gọi tôi là chủ nhân
+## 1. Nguyên Tắc Kiến Trúc Cốt Lõi
+
+### 1.1. Cấu Trúc Monorepo
+Dự án được tổ chức dưới dạng monorepo để dễ dàng đồng bộ các kiểu dữ liệu (Types) giữa client và server:
+*   `/frontend`: Dự án React + TypeScript + Vite + TailwindCSS.
+*   `/backend-cloudflare`: Dự án Hono API chạy trên Cloudflare Workers.
+*   `/docs`: Chứa các tài liệu thiết kế hệ thống (ví dụ: `sdd_realtime_chat.md`).
+
+### 1.2. Nguyên Tắc Serverless & Edge Computing
+*   Tận dụng tối đa các dịch vụ biên của Cloudflare để xử lý và lưu trữ dữ liệu với độ trễ thấp nhất.
+*   Không thiết lập máy chủ VPS truyền thống.
+*   Hạn chế tối đa việc giữ trạng thái (stateless) trên Workers thường. Trạng thái chỉ được duy trì trong các phân vùng **Durable Objects**.
+
+### 1.3. Phân Tách Nhiệm Vụ Của Durable Objects (DO)
+Để hệ thống có khả năng mở rộng (scale) lên hàng triệu người dùng, bắt buộc phải phân tách DO:
+*   `ConversationDO`: 
+    *   Mỗi phòng chat (DIRECT hoặc GROUP) có 1 instance DO.
+    *   Quản lý: WebSocket connection trong phòng, typing indicator, read receipts, broadcast tin nhắn, đảm bảo thứ tự tin nhắn (message ordering).
+*   `UserPresenceDO`:
+    *   Mỗi user trực tuyến có 1 instance DO.
+    *   Quản lý: Trạng thái Online/Offline, duy trì heartbeat, thời gian tương tác cuối (last seen) và thông báo trực tiếp cho bạn bè.
 
 ---
 
-## 1. Tổng Quan Hệ Thống
+## 2. Quy Tắc Tầng Dữ Liệu (Database & Storage Rules)
 
-Hệ thống cung cấp cơ chế xác thực danh tính người dùng thông qua Email bằng cách gửi mã OTP (One-Time Password) ngẫu nhiên 6 chữ số có hiệu lực trong vòng **5 phút**.
+### 2.1. Quy Tắc Dữ Liệu Quan Hệ (D1 - SQLite)
+*   **Khóa chính**: Tất cả các bảng dữ liệu phải sử dụng kiểu dữ liệu `TEXT` chứa chuỗi UUID (v4 hoặc v7) hoặc ULID để định danh. Không sử dụng kiểu số nguyên tự tăng (`AUTOINCREMENT`) cho các khóa chính của bảng phân tán nhằm tránh xung đột dữ liệu biên.
+*   **Tên cột**: Đặt theo chuẩn `snake_case` (ví dụ: `sender_id`, `created_at`).
+*   **Chỉ mục (Index)**: Phải tạo chỉ mục rõ ràng cho các khóa ngoại và các trường thường xuyên truy vấn bộ lọc (ví dụ: `conversation_id`, `user_id_1`, `user_id_2`).
 
-### Mô Hình Kiến Trúc (Architecture)
-
-Ứng dụng được xây dựng trên mô hình phi tập trung/không máy chủ (Serverless) cực kỳ tối ưu:
-
-```mermaid
-graph TD
-    Client[Frontend: HTML5/CSS3/Vanilla JS + Vite] -- API Requests --> Backend[Backend: Cloudflare Workers + Hono]
-    Backend -- Save OTP Hash (TTL 5 mins) --> KV[(Cloudflare KV Namespace)]
-    Backend -- HTTP POST Webhook --> GAS[Google Apps Script - Gmail App]
-    GAS -- Send Email with OTP Code --> UserEmail[Hộp thư Email người dùng]
-```
-
-### Thành phần chính:
-1. **Frontend (Vite / Vanilla JS)**: Giao diện người dùng hiện đại, thiết kế theo ngôn ngữ Glassmorphism (Kính mờ) sang trọng, chịu trách nhiệm nhận email từ người dùng, hiển thị ô nhập mã OTP dạng phân tách (6 ô độc lập), và quản lý thời gian đếm ngược (countdown timer).
-2. **Backend (Cloudflare Worker + Hono)**: Xử lý logic nghiệp vụ, tạo OTP ngẫu nhiên, thực hiện băm SHA-256 mã OTP để lưu trữ bảo mật vào Cloudflare KV với thời gian hết hạn tự động (Expiration TTL = 300s).
-3. **Google Apps Script (GAS) Webhook**: Đóng vai trò là mail client trung gian kết nối với Gmail API của Google để gửi email chứa mã OTP đến người dùng một cách chính xác mà không tốn phí duy trì server gửi mail.
-
----
-
-## 2. Quy Trình Luồng Dữ Liệu (Data Flows)
-
-### A. Quy Trình Gửi OTP (Send OTP Flow)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Người dùng
-    participant Client as Frontend Client
-    participant Worker as Cloudflare Worker
-    participant KV as Cloudflare KV
-    participant GAS as Google Apps Script
-
-    User->>Client: Nhập Email & nhấn "Send OTP"
-    Client->>Client: Validate định dạng Email (Regex)
-    Client->>Worker: POST /api/auth/send-otp { email }
-    Worker->>Worker: Sinh mã OTP ngẫu nhiên 6 chữ số
-    Worker->>Worker: Băm SHA-256 (otpCode) -> otpHash
-    Worker->>KV: Lưu { email: otpHash } (TTL = 300s)
-    Worker->>GAS: POST Webhook { email, otp: otpCode }
-    GAS->>User: Gửi Gmail chứa mã OTP thực tế
-    Worker-->>Client: Trả về 200 OK { message: "..." }
-    Client->>User: Hiển thị form nhập OTP & đếm ngược 5:00
-```
-
-### B. Quy Trình Xác Thực OTP (Verify OTP Flow)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Người dùng
-    participant Client as Frontend Client
-    participant Worker as Cloudflare Worker
-    participant KV as Cloudflare KV
-
-    User->>Client: Nhập 6 chữ số OTP
-    Client->>Worker: POST /api/auth/verify-otp { email, otp }
-    Worker->>KV: Lấy savedHash theo key: email
-    alt Không tìm thấy savedHash (Hết hạn hoặc sai email)
-        Worker-->>Client: Trả về 400 Bad Request { detail: "Invalid or expired OTP." }
-        Client->>User: Hiển thị lỗi hết hạn/không hợp lệ
-    else Có savedHash trong KV
-        Worker->>Worker: Băm SHA-256 mã otp đầu vào từ Client -> inputHash
-        alt inputHash !== savedHash
-            Worker-->>Client: Trả về 400 Bad Request { detail: "Invalid OTP." }
-            Client->>User: Báo lỗi mã OTP không chính xác
-        else inputHash === savedHash (Thành công)
-            Worker->>KV: Xóa key email (Tránh replay attack)
-            Worker-->>Client: Trả về 200 OK { message: "OTP verified successfully." }
-            Client->>User: Hiển thị màn hình Chúc mừng / Thành công
-        end
-    end
-```
-
----
-
-## 3. Đặc Tả API (Backend Cloudflare Worker)
-
-Backend chạy cục bộ trên `http://localhost:8787` (local dev) và triển khai trên Cloudflare Workers.
-
-### 1. Health Check
-*   **Method**: `GET`
-*   **Path**: `/`
-*   **Response (200)**:
-    ```json
-    {
-      "status": "ok",
-      "service": "Account Manager OTP API (Cloudflare Worker)",
-      "version": "1.0.0"
-    }
+### 2.2. Chiến Lược Phân Trang Lịch Sử Chat
+*   **Bắt buộc sử dụng Cursor Pagination**: Không sử dụng `OFFSET` vì hiệu năng sẽ giảm dần khi dữ liệu lớn.
+*   **Cú pháp chuẩn**:
+    ```sql
+    SELECT * FROM Messages 
+    WHERE conversation_id = ? AND created_at < ? 
+    ORDER BY created_at DESC 
+    LIMIT 50
     ```
+*   Cursor được truyền lên là timestamp `created_at` dạng Epoch Milliseconds.
 
-### 2. Gửi mã OTP
-*   **Method**: `POST`
-*   **Path**: `/api/auth/send-otp`
-*   **Payload**:
-    ```json
-    {
-      "email": "user@example.com"
-    }
-    ```
-*   **Responses**:
-    *   **200 OK**: Gửi thành công.
-        ```json
-        { "message": "OTP sent successfully. Please check your email." }
-        ```
-    *   **400 Bad Request**: Thiếu email.
-        ```json
-        { "error": "Email is required" }
-        ```
-    *   **500 Internal Error**: Lỗi máy chủ hoặc tích hợp.
-        ```json
-        { "error": "..." }
-        ```
-
-### 3. Xác thực mã OTP
-*   **Method**: `POST`
-*   **Path**: `/api/auth/verify-otp`
-*   **Payload**:
-    ```json
-    {
-      "email": "user@example.com",
-      "otp": "123456"
-    }
-    ```
-*   **Responses**:
-    *   **200 OK**: OTP hợp lệ và đã được xác minh thành công.
-        ```json
-        { "message": "OTP verified successfully." }
-        ```
-    *   **400 Bad Request**: Mã OTP không khớp hoặc đã hết hạn, hoặc thiếu tham số.
-        ```json
-        { "detail": "Invalid or expired OTP." }
-        // hoặc
-        { "detail": "Invalid OTP." }
-        ```
-    *   **500 Internal Error**: Lỗi máy chủ.
-        ```json
-        { "error": "..." }
-        ```
+### 2.3. Quy Tắc Lưu Trữ File (R2 Storage)
+*   **Không truyền file nhị phân qua WebSocket/Worker**: Client bắt buộc phải upload trực tiếp lên Cloudflare R2 thông qua **Presigned URL** (PUT).
+*   **Bảo mật file**: Mọi tệp tải lên mặc định có trạng thái quét virus là `PENDING`. Chỉ khi Consumer Worker quét virus và cập nhật trạng thái là `CLEAN` trong bảng `Attachments`, người dùng mới có thể tải xuống thông qua Presigned URL (GET).
 
 ---
 
-## 4. Đặc Tả Frontend (Vite / Vanilla JS)
+## 3. Quy Tắc Kiểm Soát Tần Suất & Bảo Mật (Rate Limiting & Security)
 
-Cấu trúc thư mục frontend nằm tại `/frontend` và được xây dựng bằng cấu trúc cực kỳ tối giản nhưng vô cùng sang trọng và có hiệu năng cao.
+### 3.1. Các Hạn Mức Tần Suất (Rate Limits)
+Tất cả các API nhạy cảm phải được bảo vệ bởi bộ giới hạn tần suất bằng Cloudflare KV (Sliding Window) hoặc Cloudflare Rate Limiting:
+1.  **Auth (Đăng nhập)**: Tối đa 5 lần / 1 phút / 1 IP.
+2.  **OTP (Mã xác minh)**: Tối đa 3 lần / 15 phút / 1 Email.
+3.  **Message (Gửi tin nhắn)**: Tối đa 100 tin nhắn / 1 phút / 1 User.
+4.  **Upload (Tải file lên)**: Tối đa 20 file / 1 giờ / 1 User.
 
-### Thiết Kế Giao Diện (Aesthetics & Design System)
-*   **Tone màu chính (Colors)**:
-    *   Background: `#080914` kết hợp hiệu ứng Gradient Radial tỏa ánh sáng tím mờ `#1b1236` ở góc.
-    *   Card kính (Glassmorphism): Màu nền `#121324ad` với độ mờ backdrop `blur(16px)` và viền mỏng semi-transparent `rgba(255, 255, 255, 0.08)`.
-    *   Accent: Màu tím Neon (`#8a2be2`), xanh Cyan cực sáng (`#00f5ff`) và xanh chuối Neon (`#39ff14`) dành cho trạng thái thành công.
-*   **Typography**: Sử dụng Google Font **Inter** hoặc **Outfit** để mang lại cảm giác công nghệ, sắc nét và chuyên nghiệp.
-*   **Giao diện OTP 6 số (Split OTP Inputs)**:
-    *   Chia làm 6 ô input `<input type="text" maxlength="1" inputmode="numeric">` được căn chỉnh đồng bộ.
-    *   Tích hợp xử lý sự kiện: Auto-focus sang ô tiếp theo khi nhập số, auto-focus lùi lại khi bấm Backspace, hỗ trợ Paste chuỗi 6 chữ số vào ô bất kỳ.
-
-### Các Trạng Thái Giao Diện (UI States)
-1.  **State 1: Nhập Email (Email Input)**
-    *   Nhập email, kiểm tra định dạng regex.
-    *   Loading state: Khi bấm gửi, nút "Send OTP" chuyển sang dạng loading quay tròn mượt mà, vô hiệu hóa form đầu vào.
-2.  **State 2: Xác thực OTP (OTP Verification)**
-    *   Hiển thị thông tin email đã gửi tới (ví dụ: *Chúng tôi đã gửi mã tới u***@example.com* để bảo mật thông tin).
-    *   Hiển thị 6 ô nhập mã OTP chuyên dụng.
-    *   Thời gian đếm ngược: Đếm từ `05:00` lùi dần về `00:00`. Khi còn dưới `01:00`, đổi màu đếm ngược sang đỏ cam cảnh báo.
-    *   Nút gửi lại (Resend OTP): Bị vô hiệu hóa cho tới khi đếm ngược kết thúc (`00:00`), sau đó cho phép bấm gửi lại.
-    *   Nút "Quay lại chỉnh sửa email" để người dùng sửa nếu gõ nhầm.
-3.  **State 3: Xác thực thành công (Success state)**
-    *   Khi verify đúng, hiện animation vòng tròn checkmark xanh lá phát sáng tuyệt đẹp.
-    *   Hiển thị màn hình chào mừng thành công ấn tượng.
+### 3.2. Xác Thực & Phân Quyền (Authentication)
+*   JWT Token được truyền qua HTTP Header `Authorization: Bearer <TOKEN>`.
+*   Mỗi khi Client kết nối WebSocket vào `ConversationDO`, Worker Gatekeeper phải kiểm tra JWT Token để xác thực danh tính người dùng và kiểm tra xem người dùng đó có nằm trong danh sách thành viên của cuộc hội thoại (`ConversationMembers`) trước khi cho phép thiết lập kết nối.
 
 ---
 
-## 5. Hướng Dẫn Cài Đặt Cục Bộ (Local Setup Guide)
+## 4. Nguyên Tắc Phát Triển Giao Diện (Frontend)
 
-### Khởi động Backend:
-1. Di chuyển vào thư mục backend: `cd backend-cloudflare`
-2. Cài đặt các gói phụ thuộc: `npm install`
-3. Khởi động máy chủ dev (Wrangler): `npm run dev` (Backend sẽ chạy tại cổng `http://localhost:8787`).
-   * *Mẹo*: Khi chạy nội bộ không cấu hình `GAS_WEBHOOK_URL`, mã OTP sẽ được log trực tiếp ra cửa sổ Terminal của Wrangler. Bạn có thể sao chép nó để xác thực.
-
-### Khởi động Frontend:
-1. Di chuyển vào thư mục frontend: `cd frontend`
-2. Cài đặt các gói phụ thuộc: `npm install`
-3. Khởi động máy chủ dev (Vite): `npm run dev` (Frontend sẽ chạy tại cổng `http://localhost:5173`).
-4. Mở trình duyệt truy cập địa chỉ được chỉ định để kiểm tra giao diện và luồng xác thực OTP.
-
----
-
-## 6. Checklist Cho AI Agent Gần Nhất
-*   [ ] Đảm bảo thiết kế CSS của Frontend phải tuân thủ nghiêm ngặt chuẩn cao cấp (Rich Aesthetics) đã nêu, không dùng các màu cơ bản thô kệch.
-*   [ ] Cần tích hợp xử lý chống Spam bằng cách disable nút gửi trong thời gian đếm ngược.
-*   [ ] Kiểm tra kỹ khả năng dán (paste) 6 chữ số vào ô OTP để đảm bảo UX tuyệt đối tốt cho người dùng trên các thiết bị.
-*   [ ] Xử lý CORS đúng cách (đã được cấu hình ở Backend Worker, cần đảm bảo Client gửi đúng `headers: { 'Content-Type': 'application/json' }`).
+*   **Responsive First**: Tất cả các màn hình phải được thiết kế dạng responsive, đảm bảo trải nghiệm hoàn hảo trên màn hình mobile dọc và desktop ngang.
+*   **State-driven UI**: Không thực hiện các thao tác DOM thủ công (no direct DOM manipulation). Trạng thái của khung chat, danh sách tin nhắn và danh sách online phải được quản lý chặt chẽ qua state (React State / Context).
+*   **Premium Glassmorphism**: Kế thừa và phát triển phong cách kính mờ cao cấp của VivyChat. Sử dụng các thẻ CSS `backdrop-filter: blur()`, viền mỏng semi-transparent và hiệu ứng ambient glow để mang lại trải nghiệm tốt nhất.

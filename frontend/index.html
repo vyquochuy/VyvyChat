@@ -1,161 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AeroVerify | Premium Email Authentication</title>
-  <meta name="description" content="Secure, fast, and beautiful email OTP verification platform.">
+  <title>VivyChat | Premium Authentication</title>
+  <meta name="description" content="Hệ thống đăng nhập và đăng ký tài khoản bảo mật bằng Email OTP thời gian thực trên VivyChat.">
   
   <!-- Premium Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Link stylesheet -->
-  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <!-- Ambient background glow particles -->
-  <div class="glow-bg">
-    <div class="glow-circle glow-circle-1" id="glow-1"></div>
-    <div class="glow-circle glow-circle-2" id="glow-2"></div>
-  </div>
-
-  <div class="app-container">
-    <!-- Brand Header -->
-    <header class="app-header">
-      <div class="logo-wrapper">
-        <div class="logo-icon">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <path d="M12 8v4"/>
-            <path d="M12 16h.01"/>
-          </svg>
-        </div>
-        <span class="logo-text">AeroVerify</span>
-      </div>
-    </header>
-
-    <!-- Main Glassmorphic Card -->
-    <main class="verification-card" id="verification-card">
-      
-      <!-- STEP 1: EMAIL INPUT -->
-      <section class="card-step active" id="step-email">
-        <div class="step-icon-header">
-          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
-            <path d="M22 6l-10 7L2 6"/>
-          </svg>
-        </div>
-        <h1 class="step-title">Verify Your Identity</h1>
-        <p class="step-desc">Enter your email address below. We'll send you a secure 6-digit verification code to log in.</p>
-        
-        <form class="verification-form" id="email-form" novalidate>
-          <div class="input-group">
-            <label for="email-input" class="input-label">Email Address</label>
-            <div class="input-wrapper">
-              <span class="input-icon">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-              </span>
-              <input 
-                type="email" 
-                id="email-input" 
-                placeholder="name@company.com" 
-                required
-                autocomplete="email"
-                spellcheck="false"
-              >
-              <button type="button" class="input-clear-btn" id="btn-clear-email" aria-label="Clear input" style="display: none;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-            <span class="error-message" id="email-error">Please enter a valid email address.</span>
-          </div>
-
-          <button type="submit" class="submit-btn" id="btn-send-otp">
-            <span class="btn-text">Send Code</span>
-            <span class="btn-spinner" id="spinner-send"></span>
-          </button>
-        </form>
-      </section>
-
-      <!-- STEP 2: OTP VERIFICATION -->
-      <section class="card-step" id="step-otp">
-        <div class="step-icon-header">
-          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        </div>
-        <h1 class="step-title">Enter Verification Code</h1>
-        <p class="step-desc">
-          We've sent a 6-digit OTP code to <span class="highlight-email" id="display-email">username@example.com</span>. 
-          The code will expire in <span class="countdown-timer" id="otp-timer">05:00</span>.
-        </p>
-
-        <form class="verification-form" id="otp-form" novalidate>
-          <div class="otp-inputs-container">
-            <input type="text" id="otp-digit-1" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" required aria-label="Digit 1">
-            <input type="text" id="otp-digit-2" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" required aria-label="Digit 2">
-            <input type="text" id="otp-digit-3" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" required aria-label="Digit 3">
-            <input type="text" id="otp-digit-4" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" required aria-label="Digit 4">
-            <input type="text" id="otp-digit-5" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" required aria-label="Digit 5">
-            <input type="text" id="otp-digit-6" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" required aria-label="Digit 6">
-          </div>
-          <span class="error-message" id="otp-error">The OTP must be a 6-digit number.</span>
-
-          <button type="submit" class="submit-btn" id="btn-verify-otp">
-            <span class="btn-text">Verify Code</span>
-            <span class="btn-spinner" id="spinner-verify"></span>
-          </button>
-        </form>
-
-        <div class="otp-actions">
-          <button type="button" class="action-btn-resend" id="btn-resend-otp" disabled>
-            Resend Code <span id="resend-timer-span">(300s)</span>
-          </button>
-          <button type="button" class="action-btn-back" id="btn-back-email">
-            Change Email Address
-          </button>
-        </div>
-      </section>
-
-      <!-- STEP 3: SUCCESS SCREEN -->
-      <section class="card-step" id="step-success">
-        <div class="success-icon-wrapper">
-          <div class="success-icon-ring"></div>
-          <div class="success-icon">
-            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          </div>
-        </div>
-        <h1 class="step-title">Authentication Successful</h1>
-        <p class="step-desc">Your email address has been verified successfully. Your session is now secure and authenticated.</p>
-        
-        <button type="button" class="submit-btn success-btn" id="btn-restart">
-          Restart Demo
-        </button>
-      </section>
-
-    </main>
-
-    <!-- Footer copyright info -->
-    <footer class="app-footer">
-      <p>&copy; 2026 AeroVerify. Built with premium design standards.</p>
-    </footer>
-  </div>
-
-  <!-- Toast Notification System -->
-  <div class="toast-container" id="toast-container"></div>
-
-  <!-- Load main script -->
-  <script type="module" src="./app.js"></script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

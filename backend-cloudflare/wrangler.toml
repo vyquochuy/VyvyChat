@@ -1,4 +1,4 @@
-name = "aero-verify"
+name = "vivychat-backend"
 main = "src/index.ts"
 compatibility_date = "2024-05-12"
 
@@ -6,7 +6,13 @@ compatibility_date = "2024-05-12"
 # local dev will automatically create a local mock file for OTP_KV
 [[kv_namespaces]]
 binding = "OTP_KV"
-id = "f022900d89634595b907cd66c5fe7953" # ID thực tế của KV trên Cloudflare Dashboard
+id = "3527581d81da47a384c0552561579574" # ID thực tế của KV trên Cloudflare Dashboard
+
+# Binds a Cloudflare D1 Database to your Worker
+[[d1_databases]]
+binding = "DB"
+database_name = "vivychat-db"
+database_id = "f86be2e4-e0c2-40f4-a4f6-ef41725b8492"
 
 [vars]
 # GAS_WEBHOOK_URL được đưa vào env vars (hoặc có thể dùng wrangler secrets trong production)

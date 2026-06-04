@@ -1,7 +1,7 @@
 {
-  "name": "account-manager-backend",
+  "name": "vivychat-backend",
   "version": "1.0.0",
-  "description": "Cloudflare Workers OTP Backend for Account Manager",
+  "description": "Cloudflare Workers Backend for VivyChat",
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",
