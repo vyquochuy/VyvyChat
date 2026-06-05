@@ -34,27 +34,28 @@ Dự án này giải quyết bài toán trên bằng cách tận dụng **Edge C
 | **Xác thực** | FR-01 | Đăng ký tài khoản mới bằng Email + OTP + Mật khẩu. |
 | | FR-02 | Đăng nhập / Đăng xuất an toàn bằng JWT. |
 | | FR-03 | Quên mật khẩu: Xác thực qua Email OTP và reset mật khẩu mới. |
-| **Tài khoản** | FR-04 | Quản lý hồ sơ cá nhân (thay avatar, tên hiển thị, trạng thái bio). |
-| | FR-05 | Tìm kiếm người dùng bằng email hoặc số điện thoại. |
-| **Bạn bè** | FR-06 | Gửi lời mời kết bạn, đồng ý / từ chối kết bạn. |
-| | FR-07 | Hiển thị danh sách bạn bè đang có. |
-| | FR-08 | Chặn người dùng (không nhận tin nhắn từ người bị chặn). |
-| **Trò chuyện** | FR-09 | Tạo cuộc trò chuyện cá nhân (1-1) tự động khi kết bạn/gửi tin nhắn. |
-| | FR-10 | Tạo cuộc trò chuyện nhóm (Group Chat) với nhiều thành viên. |
-| | FR-11 | Gửi tin nhắn văn bản thời gian thực. |
-| | FR-12 | Thu hồi tin nhắn (xóa ở cả 2 phía) và chỉnh sửa tin nhắn đã gửi. |
-| | FR-13 | Trạng thái tin nhắn: Đã gửi (Sent) -> Đã nhận (Delivered) -> Đã xem (Read). |
-| | FR-14 | Trạng thái "đang nhập tin nhắn" (typing...) của đối phương. |
-| | FR-15 | Tìm kiếm tin nhắn theo từ khóa trong hội thoại. |
-| **Đa phương tiện**| FR-16 | Gửi hình ảnh trực tiếp (nén trước khi gửi, có chế độ preview). |
-| | FR-17 | Gửi file đính kèm với thanh tiến trình tải lên (upload progress bar). |
-| | FR-18 | Tải file đính kèm về thiết bị. |
-| **Realtime** | FR-19 | Trạng thái Online/Offline của người dùng hiển thị tức thời. |
-| | FR-20 | Nhận thông báo đẩy (Push/Toast Notification) khi có tin nhắn mới dù đang ở ngoài phòng chat. |
-| | FR-21 | Thả cảm xúc tin nhắn (Message Reactions) với các biểu tượng 👍, ❤️, 😂, 😢. |
-| **Quản trị nhóm**| FR-22 | Thêm/Xóa thành viên khỏi nhóm chat. |
-| | FR-23 | Phân quyền nhóm: Chỉ định trưởng nhóm (Owner) và phó nhóm (Admin). |
-| **Bảo mật & Báo cáo**| FR-24 | Báo cáo (Report) người dùng vi phạm điều khoản. |
+| | FR-04 | Tạo UID người dùng: 8 chữ số tăng dần từ 10000000. |
+| **Tài khoản** | FR-05 | Quản lý hồ sơ cá nhân (thay avatar, tên hiển thị, trạng thái bio). |
+| | FR-06 | Tìm kiếm người dùng bằng email hoặc số điện thoại (nếu có). |
+| **Bạn bè** | FR-07 | Gửi lời mời kết bạn, đồng ý / từ chối kết bạn. |
+| | FR-08 | Hiển thị danh sách bạn bè đang có. |
+| | FR-09 | Chặn người dùng (không nhận tin nhắn từ người bị chặn). |
+| **Trò chuyện** | FR-10 | Tạo cuộc trò chuyện cá nhân (1-1) tự động khi kết bạn/gửi tin nhắn. |
+| | FR-11 | Tạo cuộc trò chuyện nhóm (Group Chat) với nhiều thành viên. |
+| | FR-12 | Gửi tin nhắn văn bản thời gian thực. |
+| | FR-13 | Thu hồi tin nhắn (xóa ở cả 2 phía) và chỉnh sửa tin nhắn đã gửi. |
+| | FR-14 | Trạng thái tin nhắn: Đã gửi (Sent) -> Đã nhận (Delivered) -> Đã xem (Read). |
+| | FR-15 | Trạng thái "đang nhập tin nhắn" (typing...) của đối phương. |
+| | FR-16 | Tìm kiếm tin nhắn theo từ khóa trong hội thoại. |
+| **Đa phương tiện**| FR-17 | Gửi hình ảnh trực tiếp (nén trước khi gửi, có chế độ preview). |
+| | FR-18 | Gửi file đính kèm với thanh tiến trình tải lên (upload progress bar). |
+| | FR-19 | Tải file đính kèm về thiết bị. |
+| **Realtime** | FR-20 | Trạng thái Online/Offline của người dùng hiển thị tức thời. |
+| | FR-21 | Nhận thông báo đẩy (Push/Toast Notification) khi có tin nhắn mới dù đang ở ngoài phòng chat. |
+| | FR-22 | Thả cảm xúc tin nhắn (Message Reactions) với các biểu tượng 👍, ❤️, 😂, 😢. |
+| **Quản trị nhóm**| FR-23 | Thêm/Xóa thành viên khỏi nhóm chat. |
+| | FR-24 | Phân quyền nhóm: Chỉ định trưởng nhóm (Owner) và phó nhóm (Admin). |
+| **Bảo mật & Báo cáo**| FR-25 | Báo cáo (Report) người dùng vi phạm điều khoản. |
 
 ### 2.2. Yêu cầu phi chức năng (Non-Functional Requirements)
 
@@ -101,7 +102,7 @@ Dự án này giải quyết bài toán trên bằng cách tận dụng **Edge C
         +-----------------------------------+    +---------------------------------------+
              /           |             \             |                              |
             /            |              \            v                              v
-           v             v               v   +-------------------+        +--------------------+
+           v             v               v       +-------------------+        +--------------------+
   +-------------+  +------------+  +-----------+ |   ConversationDO  |        |   UserPresenceDO   |
   |  Cloudflare |  | Cloudflare |  |Cloudflare | | (Typing, Room WS, |        | (Global Online/Off,|
   |     KV      |  |     D1     |  |    R2     | |  Read Receipt,    |        |    Last Seen)      |
@@ -175,6 +176,7 @@ Lưu trữ thông tin người dùng.
 | `email` | TEXT | UNIQUE, NOT NULL | Địa chỉ email đăng ký |
 | `password_hash` | TEXT | NOT NULL | Mật khẩu đã được hash bằng bcrypt |
 | `display_name` | TEXT | NOT NULL | Tên hiển thị của người dùng |
+| `uid` | INTEGER | UNIQUE, NOT NULL | UID công khai từ 10000000 đến 99999999 |
 | `avatar_url` | TEXT | NULL | URL ảnh đại diện trên Cloudflare R2 |
 | `bio` | TEXT | NULL | Trạng thái hiển thị cá nhân |
 | `created_at` | INTEGER | NOT NULL | Thời gian tạo (Epoch Milliseconds) |
@@ -513,51 +515,79 @@ Giao diện áp dụng Responsive Grid Layout:
 ## 9. Kế hoạch triển khai theo từng giai đoạn
 
 ### Phase 1: Xác thực người dùng (Authentication)
-*   **Mục tiêu**: Xây dựng hệ thống đăng ký, xác thực đăng nhập bằng JWT và bảo mật OTP qua Email. Tích hợp Rate Limiting cho luồng Auth.
-*   **Thời gian dự kiến**: Tuần 1.
-*   **Deliverables**:
-    *   Database schema trong D1 cho `Users`.
-    *   Hono API xác thực và cơ chế Rate Limiting trên Cloudflare KV.
-    *   Màn hình đăng nhập/đăng ký ở Frontend React.
+
+* **Mục tiêu**: Xây dựng hệ thống đăng ký, xác thực đăng nhập bằng JWT và bảo mật OTP qua Email. Tích hợp Rate Limiting cho luồng Auth để chống Brute-force.
+* **Thời gian dự kiến**: Tuần 1.
+* **Deliverables**:
+* Database schema trong Cloudflare D1 cho bảng `Users`.
+* Hono API xác thực và cơ chế Rate Limiting sử dụng Cloudflare KV.
+* Màn hình đăng nhập/đăng ký ở Frontend React.
+
+
 
 ### Phase 2: Hệ thống bạn bè & Tìm kiếm (Friend System)
-*   **Mục tiêu**: Người dùng có thể tìm thấy nhau qua email/tên và gửi yêu cầu kết bạn.
-*   **Thời gian dự kiến**: Tuần 2.
-*   **Deliverables**:
-    *   Database schema cho `Friendships` và `Notifications`.
-    *   API kết bạn, đồng ý kết bạn, danh sách bạn bè.
-    *   Giao diện tìm kiếm, danh bạ trên Frontend.
 
-### Phase 3: Hệ thống Chat Cơ bản & Durable Objects (Core Chat System)
-*   **Mục tiêu**: Thiết lập kết nối WebSocket và gửi nhận tin nhắn thời gian thực. Cấu hình phân tách `ConversationDO` và `UserPresenceDO`.
-*   **Thời gian dự kiến**: Tuần 3-4.
-*   **Deliverables**:
-    *   Cloudflare Durable Objects (`ConversationDO` và `UserPresenceDO`).
-    *   API phân trang tin nhắn (Cursor Pagination) sử dụng thời gian tạo.
-    *   Màn hình khung chat cơ bản hỗ trợ trạng thái gửi/nhận/đã xem và thả reactions.
+* **Mục tiêu**: Người dùng có thể tìm thấy nhau qua email/tên và gửi yêu cầu kết bạn.
+* **Thời gian dự kiến**: Tuần 2.
+* **Deliverables**:
+* Database schema trong D1 cho `Friendships` và `Notifications`.
+* API thực hiện các thao tác: gửi yêu cầu kết bạn, đồng ý kết bạn, lấy danh sách bạn bè.
+* Giao diện tìm kiếm người dùng và danh bạ trên Frontend.
 
-### Phase 4: Chia sẻ tệp đa phương tiện & Quét mã độc (File Sharing & Security)
-*   **Mục tiêu**: Người dùng có thể tải lên hình ảnh và các tệp đính kèm khác thông qua Cloudflare R2 và kích hoạt luồng quét virus tự động.
-*   **Thời gian dự kiến**: Tuần 5.
-*   **Deliverables**:
-    *   Cloudflare R2 Bucket được cấu hình CORS và Cloudflare Queue.
-    *   Hệ thống quét virus tự động (Workers Virus Scanner).
-    *   API cấp Presigned URL để upload/download file an toàn sau khi đã quét mã độc.
 
-### Phase 5: Tính năng Realtime Nâng cao (Advanced Realtime Features)
-*   **Mục tiêu**: Hoàn thiện các trạng thái "đang nhập tin nhắn", trạng thái "online/offline" và các thông báo toast khi có tin nhắn mới.
-*   **Thời gian dự kiến**: Tuần 6.
-*   **Deliverables**:
-    *   Sự kiện WebSocket truyền đi trạng thái typing/stop-typing và online/offline của các thành viên.
-    *   Hộp thoại thông báo đẩy (Toast Notification) thời gian thực trên màn hình Client.
 
-### Phase 6: Bảo mật, Tối ưu & Đóng gói (Security & Optimization)
-*   **Mục tiêu**: Cài đặt bảo mật, thu hồi tin nhắn, triển khai ứng dụng.
-*   **Thời gian dự kiến**: Tuần 7.
-*   **Deliverables**:
-    *   API / logic thu hồi (recall) và chỉnh sửa (edit) tin nhắn.
-    *   Tối ưu hóa kích thước file đóng gói (Vite build) và bảo mật WSS.
-    *   Triển khai thực tế lên Cloudflare Pages và Workers.
+### Phase 3: Xây dựng giao diện chat cơ bản (Basic Chat Interface)
+
+* **Mục tiêu**: Xây dựng giao diện khung chat nền tảng web với kiến trúc Component rõ ràng và thiết kế Responsive.
+* **Thời gian dự kiến**: Tuần 3.
+* **Deliverables**:
+* Cấu trúc các React Components chính: Sidebar (danh sách bạn bè/phòng chat), MessageList (khu vực hiển thị tin nhắn), MessageInput (khung nhập liệu).
+* Tích hợp State Management (Zustand hoặc Redux) để quản lý luồng dữ liệu tin nhắn phức tạp ở Client.
+* Giao diện hoàn thiện sử dụng CSS Framework (như TailwindCSS), đảm bảo hiển thị tốt trên cả Desktop và Mobile.
+
+
+
+### Phase 4: Hệ thống Chat cốt lõi & Durable Objects (Core Chat System)
+
+* **Mục tiêu**: Thiết lập WebSocket để gửi/nhận tin nhắn thời gian thực. Cấu hình phân tách `ConversationDO` và `UserPresenceDO`, đồng thời giải quyết bài toán hiệu suất ghi dữ liệu.
+* **Thời gian dự kiến**: Tuần 4-5.
+* **Deliverables**:
+* Cloudflare Durable Objects: `ConversationDO` (quản lý phòng chat) và `UserPresenceDO` (quản lý trạng thái online).
+* **Cơ chế Write-behind Cache**: `ConversationDO` gộp các tin nhắn mới trên RAM và thực hiện Batch Insert (ghi gộp) vào D1 định kỳ thay vì ghi từng dòng để tránh thắt cổ chai hiệu suất.
+* **Cơ chế tự động kết nối lại (Exponential Backoff)**: Client tự động kết nối lại khi rớt mạng và gửi kèm ID tin nhắn cuối cùng để đồng bộ phần dữ liệu bị lỡ.
+* API phân trang tin nhắn (Cursor Pagination) sử dụng thời gian tạo.
+
+
+
+### Phase 5: Chia sẻ tệp đa phương tiện & Quét mã độc (File Sharing & Security)
+
+* **Mục tiêu**: Người dùng tải lên hình ảnh/tệp qua Cloudflare R2 an toàn, không làm quá tải Server, kết hợp quét virus tự động.
+* **Thời gian dự kiến**: Tuần 5.
+* **Deliverables**:
+* Cloudflare R2 Bucket được cấu hình CORS.
+* Hệ thống cấp quyền Presigned URL từ Hono API để Client tự tải file trực tiếp lên R2.
+* Cloudflare Queue tích hợp Workers Virus Scanner để quét mã độc bất đồng bộ (Asynchronous) ngay khi file được tải lên thành công.
+
+
+
+### Phase 6: Tính năng Realtime nâng cao & Mã hóa (Advanced Realtime & Encryption)
+
+* **Mục tiêu**: Tối ưu trải nghiệm người dùng với các trạng thái thời gian thực và áp dụng bảo mật cấp cao cho nội dung tin nhắn.
+* **Thời gian dự kiến**: Tuần 6.
+* **Deliverables**:
+* Sự kiện WebSocket truyền đi trạng thái "đang nhập tin nhắn" (typing) và thông báo đẩy (Toast Notification) trên Client.
+* **Mã hóa đầu cuối (End-to-End Encryption)**: Tích hợp Web Crypto API ở Frontend. Tin nhắn được mã hóa bằng chuẩn `AES-256-GCM` trước khi đẩy qua WebSocket. Hệ thống (Durable Objects và D1) chỉ lưu trữ bản mã (Ciphertext).
+
+
+
+### Phase 7: Hoàn thiện, Tối ưu & Đóng gói (Refinement & Deployment)
+
+* **Mục tiêu**: Hoàn thiện các tính năng phụ trợ của tin nhắn, tối ưu hóa code và đưa ứng dụng lên môi trường thực tế.
+* **Thời gian dự kiến**: Tuần 7.
+* **Deliverables**:
+* API và logic xử lý thu hồi (recall) và chỉnh sửa (edit) tin nhắn, đảm bảo đồng bộ trạng thái lập tức tới mọi Client đang trong phòng.
+* Tối ưu hóa kích thước file tĩnh (Vite build optimization) và cấu hình bảo mật WSS.
+* Triển khai thực tế toàn bộ Frontend lên Cloudflare Pages và Backend API/WebSockets lên Cloudflare Workers.
 
 ---
 
@@ -565,8 +595,7 @@ Giao diện áp dụng Responsive Grid Layout:
 
 ### 10.1. Giới hạn kết nối WebSocket của Cloudflare
 *   *Vấn đề:* Cloudflare Workers miễn phí giới hạn thời gian chạy CPU và số lượng kết nối WebSocket đồng thời. Kế hoạch miễn phí có thể gặp lỗi nếu số kết nối cùng một lúc vượt ngưỡng.
-*   *Giải pháp:* 
-    *   Thiết lập Workers theo mô hình "Pay-as-you-go" khi hệ thống mở rộng ($5/tháng có sẵn hàng triệu kết nối).
+*   *Giải pháp:*
     *   Tối ưu hóa tài nguyên CPU: chỉ gửi các sự kiện thực sự cần thiết qua WebSocket. Ví dụ: Sự kiện "Đang nhập tin nhắn" không ghi vào Database D1, chỉ broadcast tức thời trong bộ nhớ của Durable Object.
 
 ### 10.2. Chi phí Durable Objects (DO)
@@ -585,6 +614,7 @@ Giao diện áp dụng Responsive Grid Layout:
 *   *Giải pháp:*
     *   Tuyệt đối không gửi file nhị phân qua Worker hay WebSocket.
     *   Sử dụng cơ chế sinh **Presigned URL của Cloudflare R2** như mô tả ở luồng hoạt động (Mục 6.3). Client sẽ tải tệp trực tiếp lên R2 Bucket, bỏ qua hoàn toàn xử lý của Worker, giảm tải CPU và RAM cho Worker một cách tối đa.
+    *   chia file thành các chunk ?
 
 ### 10.5. Khả năng mở rộng quy mô lớn (Scaling)
 *   *Vấn đề:* Khi số lượng người dùng lên tới hàng trăm ngàn người, việc gán mỗi cuộc hội thoại cho một Durable Object duy nhất vẫn hoạt động tốt, nhưng danh sách danh bạ người dùng online/offline toàn cầu có thể quá tải nếu dồn vào 1 Object quản lý duy nhất.

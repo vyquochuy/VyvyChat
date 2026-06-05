@@ -72,3 +72,15 @@ Tất cả các API nhạy cảm phải được bảo vệ bởi bộ giới h�
 *   **Responsive First**: Tất cả các màn hình phải được thiết kế dạng responsive, đảm bảo trải nghiệm hoàn hảo trên màn hình mobile dọc và desktop ngang.
 *   **State-driven UI**: Không thực hiện các thao tác DOM thủ công (no direct DOM manipulation). Trạng thái của khung chat, danh sách tin nhắn và danh sách online phải được quản lý chặt chẽ qua state (React State / Context).
 *   **Premium Glassmorphism**: Kế thừa và phát triển phong cách kính mờ cao cấp của VivyChat. Sử dụng các thẻ CSS `backdrop-filter: blur()`, viền mỏng semi-transparent và hiệu ứng ambient glow để mang lại trải nghiệm tốt nhất.
+
+---
+
+## 5. Quy Tắc Lưu Trữ Tri Thức & Công Nghệ Theo Phase (Knowledge Management & Phase Records)
+
+*   **Tạo thư mục tài liệu phase**: Sau khi hoàn thành mỗi Phase (giai đoạn phát triển), Agent phải tạo hoặc cập nhật một thư mục con nằm trong thư mục `/docs` (ví dụ: `/docs/phase-records/` hoặc `/docs/tech-stack/`) để ghi nhận lại toàn bộ tri thức kỹ thuật tích lũy.
+*   **Nội dung lưu trữ**: Mỗi tài liệu tổng kết phase phải chi tiết hóa:
+    *   **Công nghệ & Framework**: Các công nghệ lõi và framework đã sử dụng trong phase.
+    *   **Thuật toán & Lý thuyết**: Các thuật toán, cơ chế thiết kế (design patterns), hoặc các khái niệm lý thuyết cốt lõi được áp dụng.
+    *   **Thư viện & Công cụ**: Các thư viện bên thứ ba (npm packages, plugins) được cài đặt và lý do lựa chọn chúng.
+    *   **Kiến thức đúc kết**: Các bài học kinh nghiệm, giải pháp cho những vấn đề khó khăn gặp phải trong phase.
+*   **Mục đích**: Giải thích cho lập trình viên hiểu và học tập, Lưu trữ tài nguyên tri thức của dự án giúp các Agent hoặc Lập trình viên ở phase tiếp theo nắm bắt nhanh chóng ngữ cảnh, cấu trúc kiến trúc và các quyết định kỹ thuật đã đưa ra.

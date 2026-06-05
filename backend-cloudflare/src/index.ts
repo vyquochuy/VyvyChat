@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { sign } from 'hono/jwt'
 import { hashPassword, verifyPassword } from './utils/crypto'
 import { checkRateLimit } from './utils/rateLimiter'
+import { authMiddleware } from './middlewares/auth'
 
 type Bindings = {
   OTP_KV: KVNamespace
@@ -11,7 +12,14 @@ type Bindings = {
   JWT_SECRET?: string
 }
 
-const app = new Hono<{ Bindings: Bindings }>()
+type Variables = {
+  user: {
+    id: string
+    email: string
+  }
+}
+
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
 // Kích hoạt CORS cho tất cả các origins để Client di động và Web gọi được
 app.use('*', cors({
@@ -179,10 +187,16 @@ app.post('/api/auth/register', async (c) => {
     const userId = crypto.randomUUID()
     const now = Date.now()
 
-    // 4. Lưu thông tin User mới vào D1 Database
+    // 4. Lưu thông tin User mới vào D1 Database kèm theo sinh UID tăng dần từ 10000000
     await c.env.DB.prepare(
-      'INSERT INTO users (id, email, password_hash, display_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO users (id, email, password_hash, display_name, uid, created_at, updated_at) VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(uid), 9999999) + 1 FROM users), ?, ?)'
     ).bind(userId, cleanEmail, passwordHash, displayName, now, now).run()
+
+    // Lấy UID vừa được tự động tạo để trả về cho Client
+    const userRow = await c.env.DB.prepare(
+      'SELECT uid FROM users WHERE id = ?'
+    ).bind(userId).first<{ uid: number }>()
+    const userUid = userRow?.uid || 10000000
 
     // 5. Xác thực thành công: Xóa OTP để tránh replay attack
     await c.env.OTP_KV.delete(`otp:${cleanEmail}`)
@@ -198,7 +212,8 @@ app.post('/api/auth/register', async (c) => {
       user: {
         id: userId,
         email: cleanEmail,
-        displayName
+        displayName,
+        uid: userUid
       }
     }, 201)
 
@@ -232,6 +247,7 @@ app.post('/api/auth/login', async (c) => {
       email: string
       password_hash: string
       display_name: string
+      uid: number
       avatar_url: string | null
       bio: string | null
     }>()
@@ -258,11 +274,342 @@ app.post('/api/auth/login', async (c) => {
         id: user.id,
         email: user.email,
         displayName: user.display_name,
+        uid: user.uid,
         avatarUrl: user.avatar_url,
         bio: user.bio
       }
     })
 
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
+// ==========================================================================
+// FRIEND & SEARCH APIS (PROTECTED ROUTES)
+// ==========================================================================
+
+// API: Tìm kiếm người dùng bằng UID, Email hoặc Tên hiển thị
+app.get('/api/users/search', authMiddleware, async (c) => {
+  const query = c.req.query('query')?.trim()
+  if (!query) {
+    return c.json([])
+  }
+
+  const currentUser = c.get('user')
+
+  let users: any[] = []
+  if (/^\d+$/.test(query)) {
+    const uidVal = parseInt(query, 10)
+    users = await c.env.DB.prepare(
+      'SELECT id, display_name, email, uid, avatar_url, bio FROM users WHERE uid = ? AND id != ?'
+    ).bind(uidVal, currentUser.id).all().then(r => r.results)
+  } else if (query.includes('@')) {
+    users = await c.env.DB.prepare(
+      'SELECT id, display_name, email, uid, avatar_url, bio FROM users WHERE email = ? AND id != ?'
+    ).bind(query.toLowerCase(), currentUser.id).all().then(r => r.results)
+  } else {
+    users = await c.env.DB.prepare(
+      'SELECT id, display_name, email, uid, avatar_url, bio FROM users WHERE display_name LIKE ? AND id != ? LIMIT 20'
+    ).bind(`%${query}%`, currentUser.id).all().then(r => r.results)
+  }
+
+  const populatedUsers = await Promise.all(users.map(async (u) => {
+    const friendship = await c.env.DB.prepare(
+      'SELECT * FROM friendships WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)'
+    ).bind(currentUser.id, u.id, u.id, currentUser.id).first<{
+      id: string
+      user_id_1: string
+      user_id_2: string
+      status: string
+    }>()
+
+    let relationStatus = 'NONE'
+    if (friendship) {
+      if (friendship.status === 'ACCEPTED') {
+        relationStatus = 'ACCEPTED'
+      } else if (friendship.status === 'PENDING') {
+        if (friendship.user_id_1 === currentUser.id) {
+          relationStatus = 'PENDING_SENT'
+        } else {
+          relationStatus = 'PENDING_RECEIVED'
+        }
+      } else if (friendship.status === 'BLOCKED') {
+        relationStatus = 'BLOCKED'
+      }
+    }
+
+    return {
+      id: u.id,
+      displayName: u.display_name,
+      email: u.email,
+      uid: u.uid,
+      avatarUrl: u.avatar_url,
+      bio: u.bio,
+      relationStatus
+    }
+  }))
+
+  return c.json(populatedUsers)
+})
+
+// API: Gửi lời mời kết bạn (hoặc tự động Chấp nhận nếu đối phương đã gửi trước đó)
+app.post('/api/friends/request', authMiddleware, async (c) => {
+  try {
+    const { targetUserId } = await c.req.json<{ targetUserId: string }>()
+    if (!targetUserId) {
+      return c.json({ error: 'Target user ID is required.' }, 400)
+    }
+
+    const currentUser = c.get('user')
+    if (currentUser.id === targetUserId) {
+      return c.json({ error: 'Bạn không thể kết bạn với chính mình.' }, 400)
+    }
+
+    const targetUser = await c.env.DB.prepare(
+      'SELECT id, display_name FROM users WHERE id = ?'
+    ).bind(targetUserId).first<{ id: string, display_name: string }>()
+    if (!targetUser) {
+      return c.json({ error: 'Người dùng không tồn tại.' }, 404)
+    }
+
+    const currentUserProfile = await c.env.DB.prepare(
+      'SELECT display_name FROM users WHERE id = ?'
+    ).bind(currentUser.id).first<{ display_name: string }>()
+
+    const existing = await c.env.DB.prepare(
+      'SELECT * FROM friendships WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)'
+    ).bind(currentUser.id, targetUserId, targetUserId, currentUser.id).first<{
+      id: string
+      user_id_1: string
+      user_id_2: string
+      status: string
+    }>()
+
+    const now = Date.now()
+
+    if (existing) {
+      if (existing.status === 'ACCEPTED') {
+        return c.json({ error: 'Hai người đã là bạn bè.' }, 400)
+      } else if (existing.status === 'PENDING') {
+        if (existing.user_id_1 === currentUser.id) {
+          return c.json({ error: 'Lời mời kết bạn đang chờ phản hồi từ đối phương.' }, 400)
+        } else {
+          await c.env.DB.prepare(
+            "UPDATE friendships SET status = 'ACCEPTED', updated_at = ? WHERE id = ?"
+          ).bind(now, existing.id).run()
+
+          const notifId = crypto.randomUUID()
+          await c.env.DB.prepare(
+            'INSERT INTO notifications (id, user_id, title, body, type, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+          ).bind(
+            notifId,
+            targetUserId,
+            'Đã chấp nhận kết bạn',
+            `${currentUserProfile?.display_name || 'Ai đó'} đã chấp nhận lời mời kết bạn của bạn.`,
+            'SYSTEM',
+            now
+          ).run()
+
+          return c.json({ message: 'Đã chấp nhận lời mời kết bạn thành công!', relationStatus: 'ACCEPTED' })
+        }
+      } else if (existing.status === 'BLOCKED') {
+        return c.json({ error: 'Không thể gửi lời mời kết bạn.' }, 400)
+      }
+    }
+
+    const friendshipId = crypto.randomUUID()
+    await c.env.DB.prepare(
+      'INSERT INTO friendships (id, user_id_1, user_id_2, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(friendshipId, currentUser.id, targetUserId, 'PENDING', now, now).run()
+
+    const notifId = crypto.randomUUID()
+    await c.env.DB.prepare(
+      'INSERT INTO notifications (id, user_id, title, body, type, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(
+      notifId,
+      targetUserId,
+      'Lời mời kết bạn mới',
+      `${currentUserProfile?.display_name || 'Ai đó'} đã gửi cho bạn một lời mời kết bạn.`,
+      'FRIEND_REQUEST',
+      now
+    ).run()
+
+    return c.json({ message: 'Đã gửi lời mời kết bạn.', relationStatus: 'PENDING_SENT' })
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
+// API: Lấy danh sách bạn bè đã kết nối (ACCEPTED)
+app.get('/api/friends', authMiddleware, async (c) => {
+  try {
+    const currentUser = c.get('user')
+
+    const friendships = await c.env.DB.prepare(
+      "SELECT * FROM friendships WHERE (user_id_1 = ? OR user_id_2 = ?) AND status = 'ACCEPTED'"
+    ).bind(currentUser.id, currentUser.id).all().then(r => r.results) as any[]
+
+    const friendsList = await Promise.all(friendships.map(async (f) => {
+      const friendId = f.user_id_1 === currentUser.id ? f.user_id_2 : f.user_id_1
+      const friend = await c.env.DB.prepare(
+        'SELECT id, display_name, email, uid, avatar_url, bio FROM users WHERE id = ?'
+      ).bind(friendId).first<{
+        id: string
+        display_name: string
+        email: string
+        uid: number
+        avatar_url: string | null
+        bio: string | null
+      }>()
+
+      return {
+        friendshipId: f.id,
+        id: friend?.id,
+        displayName: friend?.display_name,
+        email: friend?.email,
+        uid: friend?.uid,
+        avatarUrl: friend?.avatar_url,
+        bio: friend?.bio,
+        relationStatus: 'ACCEPTED'
+      }
+    }))
+
+    return c.json(friendsList)
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
+// API: Lấy danh sách lời mời kết bạn đang chờ nhận (PENDING)
+app.get('/api/friends/requests', authMiddleware, async (c) => {
+  try {
+    const currentUser = c.get('user')
+
+    const requests = await c.env.DB.prepare(
+      "SELECT * FROM friendships WHERE user_id_2 = ? AND status = 'PENDING'"
+    ).bind(currentUser.id).all().then(r => r.results) as any[]
+
+    const requestList = await Promise.all(requests.map(async (f) => {
+      const requester = await c.env.DB.prepare(
+        'SELECT id, display_name, email, uid, avatar_url, bio FROM users WHERE id = ?'
+      ).bind(f.user_id_1).first<{
+        id: string
+        display_name: string
+        email: string
+        uid: number
+        avatar_url: string | null
+        bio: string | null
+      }>()
+
+      return {
+        friendshipId: f.id,
+        id: requester?.id,
+        displayName: requester?.display_name,
+        email: requester?.email,
+        uid: requester?.uid,
+        avatarUrl: requester?.avatar_url,
+        bio: requester?.bio,
+        createdAt: f.created_at
+      }
+    }))
+
+    return c.json(requestList)
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
+// API: Chấp nhận hoặc Từ chối yêu cầu kết bạn
+app.post('/api/friends/respond', authMiddleware, async (c) => {
+  try {
+    const { friendshipId, action } = await c.req.json<{ friendshipId: string; action: 'ACCEPT' | 'DECLINE' }>()
+    if (!friendshipId || !action) {
+      return c.json({ error: 'Friendship ID and action are required.' }, 400)
+    }
+
+    const currentUser = c.get('user')
+
+    const friendship = await c.env.DB.prepare(
+      'SELECT * FROM friendships WHERE id = ?'
+    ).bind(friendshipId).first<{
+      id: string
+      user_id_1: string
+      user_id_2: string
+      status: string
+    }>()
+
+    if (!friendship) {
+      return c.json({ error: 'Yêu cầu kết bạn không tồn tại.' }, 404)
+    }
+
+    if (friendship.user_id_2 !== currentUser.id) {
+      return c.json({ error: 'Bạn không có quyền thực hiện hành động này.' }, 403)
+    }
+
+    const now = Date.now()
+
+    if (action === 'ACCEPT') {
+      await c.env.DB.prepare(
+        "UPDATE friendships SET status = 'ACCEPTED', updated_at = ? WHERE id = ?"
+      ).bind(now, friendshipId).run()
+
+      const requester = await c.env.DB.prepare('SELECT display_name FROM users WHERE id = ?').bind(friendship.user_id_1).first<{ display_name: string }>()
+      const current = await c.env.DB.prepare('SELECT display_name FROM users WHERE id = ?').bind(currentUser.id).first<{ display_name: string }>()
+
+      const notifId = crypto.randomUUID()
+      await c.env.DB.prepare(
+        'INSERT INTO notifications (id, user_id, title, body, type, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+      ).bind(
+        notifId,
+        friendship.user_id_1,
+        'Đã chấp nhận kết bạn',
+        `${current?.display_name || 'Ai đó'} đã chấp nhận lời mời kết bạn của bạn.`,
+        'SYSTEM',
+        now
+      ).run()
+
+      return c.json({ message: 'Đã chấp nhận kết bạn.', relationStatus: 'ACCEPTED' })
+    } else if (action === 'DECLINE') {
+      await c.env.DB.prepare(
+        'DELETE FROM friendships WHERE id = ?'
+      ).bind(friendshipId).run()
+
+      return c.json({ message: 'Đã từ chối lời mời kết bạn.', relationStatus: 'NONE' })
+    } else {
+      return c.json({ error: 'Hành động không hợp lệ. Chỉ chấp nhận ACCEPT hoặc DECLINE.' }, 400)
+    }
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
+// API: Lấy danh sách thông báo của người dùng
+app.get('/api/notifications', authMiddleware, async (c) => {
+  try {
+    const currentUser = c.get('user')
+
+    const notifications = await c.env.DB.prepare(
+      'SELECT id, title, body, is_read, type, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 100'
+    ).bind(currentUser.id).all().then(r => r.results)
+
+    return c.json(notifications)
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
+// API: Đánh dấu thông báo là đã đọc
+app.post('/api/notifications/:id/read', authMiddleware, async (c) => {
+  try {
+    const id = c.req.param('id')
+    const currentUser = c.get('user')
+
+    await c.env.DB.prepare(
+      'UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?'
+    ).bind(id, currentUser.id).run()
+
+    return c.json({ message: 'Đã đánh dấu thông báo là đã đọc.' })
   } catch (error: any) {
     return c.json({ error: error.message }, 500)
   }
