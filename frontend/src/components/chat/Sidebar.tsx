@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSendFriendRequest,
   isLoadingData
 }) => {
-  const { friends, activeFriendId, setActiveFriendId, messages } = useChatStore()
+  const { friends, activeFriendId, setActiveFriendId, messages, onlineFriends } = useChatStore()
   const [filterQuery, setFilterQuery] = useState('')
 
   // Filter friends based on query (local search)
@@ -72,8 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           onClick={onLogout}
           className="bg-[rgba(255,51,102,0.08)] border border-[rgba(255,51,102,0.2)] text-[var(--color-error)] px-2.5 py-1 rounded-md text-xs cursor-pointer hover:bg-[rgba(255,51,102,0.15)] transition-all"
-        >
-          Đăng xuất
+        > Đăng xuất
         </button>
       </div>
 
@@ -134,6 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   const msgs = messages[f.id] || []
                   const lastMsg = msgs[msgs.length - 1]
                   const isActive = activeFriendId === f.id
+                  const isOnline = onlineFriends[f.id]?.status === 'online'
 
                   return (
                     <div
@@ -142,8 +142,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       className={`${isActive ? 'bg-[rgba(138,43,226,0.15)] border-[rgba(138,43,226,0.3)]' : 'bg-white/[0.02] border-white/[0.05]'} border px-3 py-2.5 rounded-xl cursor-pointer text-left transition-all duration-200 hover:bg-white/[0.05]`}
                     >
                       <div className="flex justify-between items-center">
-                        <span className={`font-bold text-[13.5px] ${isActive ? 'text-[var(--color-cyan)]' : 'text-white'}`}>
+                        <span className={`font-bold text-[13.5px] ${isActive ? 'text-[var(--color-cyan)]' : 'text-white'} flex items-center gap-1.5`}>
                           {f.displayName}
+                          <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[var(--color-success)] shadow-[0_0_6px_var(--color-success)]' : 'bg-white/20'}`} />
                         </span>
                         <span className="text-[10px] text-[var(--text-muted)]">
                           {lastMsg ? new Date(lastMsg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}
@@ -170,14 +171,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="flex flex-col gap-1.5">
                 {filteredFriends.map((f) => {
                   const isActive = activeFriendId === f.id
+                  const isOnline = onlineFriends[f.id]?.status === 'online'
                   return (
                     <div
                       key={f.id}
                       onClick={() => setActiveFriendId(f.id)}
                       className={`${isActive ? 'bg-[rgba(138,43,226,0.15)] border-[rgba(138,43,226,0.3)]' : 'bg-white/[0.02] border-white/[0.05]'} border px-3 py-2.5 rounded-xl cursor-pointer text-left transition-all duration-200 hover:bg-white/[0.05]`}
                     >
-                      <div className={`font-bold text-[13.5px] ${isActive ? 'text-[var(--color-cyan)]' : 'text-white'}`}>
+                      <div className={`font-bold text-[13.5px] ${isActive ? 'text-[var(--color-cyan)]' : 'text-white'} flex items-center gap-1.5`}>
                         {f.displayName}
+                        <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[var(--color-success)] shadow-[0_0_6px_var(--color-success)]' : 'bg-white/20'}`} />
                       </div>
                       <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
                         UID: {f.uid}

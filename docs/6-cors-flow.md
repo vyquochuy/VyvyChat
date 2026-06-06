@@ -61,27 +61,38 @@ sequenceDiagram
 
 ## 3. Cách chúng ta xử lý lỗi CORS trong Hono Framework
 
-Trong file `backend-cloudflare/src/index.ts`, để Backend Worker cho phép cả Client Web chạy local (`localhost:5173`) hay Client di động Flutter gọi API, chúng ta cấu hình middleware CORS vô cùng đơn giản:
+Trong file `backend-cloudflare/src/index.ts`, để Backend Worker cho phép cả Client Web chạy local (`localhost:5173`) hay Client di động Flutter gọi API và thực hiện xác thực người dùng, chúng ta cấu hình middleware CORS như sau:
 
 ```typescript
-import { cors } from 'hono/cors'
-
-// Áp dụng middleware CORS cho tất cả các đường dẫn ('*')
+// Kích hoạt CORS cho tất cả các origins để Client di động và Web gọi được
 app.use('*', cors({
-  origin: '*', // Cho phép TẤT CẢ các nguồn được gọi (vô cùng hữu ích khi phân phối API công khai hoặc phát triển local)
-  allowMethods: ['POST', 'GET', 'OPTIONS'], // Cho phép các phương thức này hoạt động
-  allowHeaders: ['Content-Type'], // Cho phép client gửi thêm header này (cần thiết khi gửi JSON)
+  origin: '*', // Cho phép TẤT CẢ các nguồn được gọi (vô cùng hữu ích khi phát triển local hoặc phân phối API)
+  allowMethods: ['POST', 'GET', 'OPTIONS'], // Cho phép các phương thức HTTP này hoạt động
+  allowHeaders: ['Content-Type', 'Authorization'], // Cho phép client gửi thêm Content-Type và Authorization
 }))
 ```
 
+### Tại sao phải cho phép Header `Authorization` trong CORS?
+
+Đây là một điểm cực kỳ quan trọng khi xây dựng hệ thống xác thực dựa trên token (Token-based Authentication - như JWT):
+
+1. **Gửi Token Xác Thực**: Khi gọi các API bảo mật (protected routes) như lấy danh sách bạn bè (`/api/friends`) hay lấy thông báo (`/api/notifications`), ứng dụng Frontend (React) cần gửi JWT token kèm theo trong Header HTTP dưới dạng:
+   ```http
+   Authorization: Bearer <your_jwt_token>
+   ```
+2. **Yêu cầu Preflight đặc biệt**: Do `Authorization` là một **Custom Header** (không nằm trong danh sách các header cơ bản mặc định được trình duyệt chấp thuận như `Accept`, `Accept-Language`, `Content-Language`), trình duyệt sẽ **bắt buộc** phải gửi một **Preflight Request (OPTIONS)** trước khi gửi request thật.
+3. **Phản hồi từ Server**: Trong request `OPTIONS` này, trình duyệt gửi kèm header `Access-Control-Request-Headers: authorization, content-type` để "hỏi ý kiến" server.
+   - Nếu server trả về `Access-Control-Allow-Headers` chứa cả `Content-Type` và `Authorization`, trình duyệt sẽ thông qua và tiếp tục gửi request thật (GET/POST) kèm theo Token.
+   - Nếu server thiếu `Authorization` trong danh sách `allowHeaders`, trình duyệt sẽ ngay lập tức chặn request thật lại và ném ra lỗi CORS.
+
 ### Giải thích các HTTP Headers máy chủ trả về nhờ CORS Middleware:
-- **`Access-Control-Allow-Origin`**: `*` (Nghĩa là bất cứ website nào cũng có thể gọi API này. Đối với các hệ thống nhạy cảm hơn, bạn có thể giới hạn chính xác tên miền như `https://my-frontend.com`).
+- **`Access-Control-Allow-Origin`**: `*` (Nghĩa là bất cứ website nào cũng có thể gọi API này. Trong thực tế môi trường production bảo mật cao, bạn nên giới hạn chính xác tên miền ví dụ: `https://my-frontend.com`).
 - **`Access-Control-Allow-Methods`**: `POST, GET, OPTIONS` (Khai báo các phương thức HTTP hợp lệ được phép gọi từ xa).
-- **`Access-Control-Allow-Headers`**: `Content-Type` (Cho phép client chỉ định dữ liệu truyền là JSON bằng việc gửi kèm `Content-Type: application/json`).
+- **`Access-Control-Allow-Headers`**: `Content-Type, Authorization` (Khai báo các custom headers mà client được phép đính kèm trong request).
 
 ---
 
 ## 📚 Tóm tắt bài học
-* **CORS** là cơ chế bảo mật của trình duyệt, được điều khiển bằng HTTP Headers trả về từ phía Máy chủ (Backend).
-* **OPTIONS (Preflight)** là một bước đệm kiểm tra an toàn tự động của trình duyệt trước khi thực hiện các yêu cầu thay đổi dữ liệu (POST, PUT, DELETE).
-* Phải luôn cấu hình đúng Middleware CORS trên Backend (đặc biệt là phương thức `OPTIONS` và các Header được phép) để ứng dụng Frontend có thể kết nối thông suốt.
+* **CORS** là cơ chế bảo mật của trình duyệt, được điều khiển hoàn toàn bằng HTTP Headers trả về từ phía Máy chủ (Backend).
+* **OPTIONS (Preflight)** là một bước đệm kiểm tra an toàn tự động của trình duyệt trước khi thực hiện các yêu cầu nhạy cảm hoặc đính kèm các Custom Headers như `Authorization`.
+* Phải luôn cấu hình đúng Middleware CORS trên Backend (đặc biệt là cho phép phương thức `OPTIONS` và các Header cần thiết như `Content-Type`, `Authorization`) để ứng dụng Frontend có thể kết nối và thực hiện xác thực thông suốt.

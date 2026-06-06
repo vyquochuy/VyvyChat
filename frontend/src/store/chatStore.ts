@@ -5,63 +5,54 @@ export interface Message {
   senderId: string
   content: string
   timestamp: number
-  type: 'TEXT' | 'IMAGE' | 'FILE'
+  type: 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
 }
 
 interface ChatState {
   activeFriendId: string | null
-  messages: Record<string, Message[]>
+  conversations: Record<string, string> // friendId -> conversationId
+  messages: Record<string, Message[]> // friendId -> Message[]
+  onlineFriends: Record<string, { status: string; lastSeen?: number }> // friendId -> presence
   friends: any[]
-  addMessage: (friendId: string, content: string, senderId: string) => void
+  addMessage: (friendId: string, messageOrContent: Message | string, senderId?: string) => void
+  setMessages: (friendId: string, messages: Message[]) => void
   setFriends: (friends: any[]) => void
   setActiveFriendId: (friendId: string | null) => void
+  setConversationId: (friendId: string, conversationId: string) => void
+  updatePresence: (friendId: string, status: string, lastSeen?: number) => void
+  setOnlineFriends: (presenceMap: Record<string, { status: string; lastSeen?: number }>) => void
   clearStore: () => void
-}
-
-// Generate some mock initial messages for a friendly user onboarding experience
-export const getMockInitialMessages = (friendId: string): Message[] => {
-  return [
-    {
-      id: `${friendId}-mock-1`,
-      senderId: friendId,
-      content: 'Chào cậu! Chúc cậu một ngày tốt lành.',
-      timestamp: Date.now() - 3600000 * 2, // 2 hours ago
-      type: 'TEXT'
-    },
-    {
-      id: `${friendId}-mock-2`,
-      senderId: 'current-user',
-      content: 'Chào cậu nhé! Cảm ơn cậu.',
-      timestamp: Date.now() - 3600000, // 1 hour ago
-      type: 'TEXT'
-    },
-    {
-      id: `${friendId}-mock-3`,
-      senderId: friendId,
-      content: 'Tụi mình nhắn tin thử nghiệm ở giao diện Phase 3 này nhé!',
-      timestamp: Date.now() - 1800000, // 30 mins ago
-      type: 'TEXT'
-    }
-  ]
 }
 
 export const useChatStore = create<ChatState>((set) => ({
   activeFriendId: null,
+  conversations: {},
   messages: {},
+  onlineFriends: {},
   friends: [],
 
-  addMessage: (friendId, content, senderId) =>
+  addMessage: (friendId, messageOrContent, senderId) =>
     set((state) => {
-      const newMessage: Message = {
-        id: crypto.randomUUID(),
-        senderId,
-        content,
-        timestamp: Date.now(),
-        type: 'TEXT'
+      let newMessage: Message
+      if (typeof messageOrContent === 'string') {
+        newMessage = {
+          id: crypto.randomUUID(),
+          senderId: senderId || 'current-user',
+          content: messageOrContent,
+          timestamp: Date.now(),
+          type: 'TEXT'
+        }
+      } else {
+        newMessage = messageOrContent
       }
 
-      const friendMessages = state.messages[friendId] || getMockInitialMessages(friendId)
+      const friendMessages = state.messages[friendId] || []
       
+      // Tránh trùng lặp tin nhắn dựa trên ID
+      if (friendMessages.some(m => m.id === newMessage.id)) {
+        return {}
+      }
+
       return {
         messages: {
           ...state.messages,
@@ -70,9 +61,48 @@ export const useChatStore = create<ChatState>((set) => ({
       }
     }),
 
+  setMessages: (friendId, messages) =>
+    set((state) => ({
+      messages: {
+        ...state.messages,
+        [friendId]: messages
+      }
+    })),
+
   setFriends: (friends) => set({ friends }),
 
   setActiveFriendId: (activeFriendId) => set({ activeFriendId }),
 
-  clearStore: () => set({ activeFriendId: null, messages: {}, friends: [] })
+  setConversationId: (friendId, conversationId) =>
+    set((state) => ({
+      conversations: {
+        ...state.conversations,
+        [friendId]: conversationId
+      }
+    })),
+
+  updatePresence: (friendId, status, lastSeen) =>
+    set((state) => ({
+      onlineFriends: {
+        ...state.onlineFriends,
+        [friendId]: { status, lastSeen }
+      }
+    })),
+
+  setOnlineFriends: (presenceMap) =>
+    set((state) => ({
+      onlineFriends: {
+        ...state.onlineFriends,
+        ...presenceMap
+      }
+    })),
+
+  clearStore: () =>
+    set({
+      activeFriendId: null,
+      conversations: {},
+      messages: {},
+      onlineFriends: {},
+      friends: []
+    })
 }))

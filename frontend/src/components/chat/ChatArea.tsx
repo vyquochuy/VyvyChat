@@ -1,10 +1,14 @@
 import React from 'react'
-import { useChatStore, getMockInitialMessages } from '../../store/chatStore'
+import { useChatStore } from '../../store/chatStore'
 import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
 
-export const ChatArea: React.FC = () => {
-  const { activeFriendId, friends, messages, addMessage, setActiveFriendId } = useChatStore()
+interface ChatAreaProps {
+  onSendMessage?: (content: string) => void
+}
+
+export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage }) => {
+  const { activeFriendId, friends, messages, addMessage, setActiveFriendId, onlineFriends } = useChatStore()
 
   // Find selected friend details
   const activeFriend = friends.find((f) => f.id === activeFriendId)
@@ -28,11 +32,15 @@ export const ChatArea: React.FC = () => {
     )
   }
 
-  // Get active messages or fallback to initial onboarding mock messages
-  const friendMsgs = messages[activeFriendId] || getMockInitialMessages(activeFriendId)
+  // Get active messages or fallback to empty array
+  const friendMsgs = messages[activeFriendId] || []
 
   const handleSend = (content: string) => {
-    addMessage(activeFriendId, content, 'current-user')
+    if (onSendMessage) {
+      onSendMessage(content)
+    } else {
+      addMessage(activeFriendId, content, 'current-user')
+    }
   }
 
   return (
@@ -54,10 +62,17 @@ export const ChatArea: React.FC = () => {
           <h3 className="text-[15px] font-bold text-white m-0">
             {activeFriend.displayName}
           </h3>
-          <span className="text-[11px] text-[var(--color-success)] flex items-center gap-1 mt-0.5">
-            <span className="w-1.5 h-1.5 bg-[var(--color-success)] rounded-full" />
-            Trực tuyến
-          </span>
+          {onlineFriends[activeFriendId]?.status === 'online' ? (
+            <span className="text-[11px] text-[var(--color-success)] flex items-center gap-1 mt-0.5">
+              <span className="w-1.5 h-1.5 bg-[var(--color-success)] rounded-full" />
+              Trực tuyến
+            </span>
+          ) : (
+            <span className="text-[11px] text-[var(--text-secondary)] flex items-center gap-1 mt-0.5">
+              <span className="w-1.5 h-1.5 bg-white/20 rounded-full" />
+              Ngoại tuyến {onlineFriends[activeFriendId]?.lastSeen ? `(Hoạt động cuối: ${new Date(onlineFriends[activeFriendId].lastSeen!).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })})` : ''}
+            </span>
+          )}
         </div>
       </div>
 

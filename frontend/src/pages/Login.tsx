@@ -3,11 +3,12 @@ import { useToast } from '../components/Toast';
 
 interface LoginProps {
   onSwitchToRegister: () => void;
+  onSwitchToForgot: () => void;
   onSuccess: (data: { token: string; user: any }) => void;
   backendUrl: string;
 }
 
-export const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onSuccess, backendUrl }) => {
+export const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onSwitchToForgot, onSuccess, backendUrl }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -152,7 +153,7 @@ export const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onSuccess, bac
           </button>
         </form>
 
-        <div className="otp-actions">
+        <div className="otp-actions flex flex-col gap-2">
           <button
             type="button"
             className="action-btn-resend"
@@ -160,6 +161,14 @@ export const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onSuccess, bac
             disabled={isLoading}
           >
             Chưa có tài khoản? Đăng ký ngay
+          </button>
+          <button
+            type="button"
+            className="action-btn-back !mt-1"
+            onClick={onSwitchToForgot}
+            disabled={isLoading}
+          >
+            Quên mật khẩu?
           </button>
         </div>
       </section>
