@@ -156,7 +156,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/5 overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-[var(--color-purple)] to-[var(--color-cyan)] transition-all duration-150"
-            style={{ width: `${uploadProgress}%` }}
           />
           <div className="absolute top-[3px] left-4 text-[10px] text-white/50 bg-black/80 px-2 py-0.5 rounded-b-md">
             Đang tải lên: {uploadFileName} ({uploadProgress}%)
