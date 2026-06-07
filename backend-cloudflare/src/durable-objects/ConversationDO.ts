@@ -1,10 +1,12 @@
+import { Env } from '../types/env'
+
 export class ConversationDO implements DurableObject {
   private sessions = new Map<WebSocket, { userId: string }>()
   private messageCache: Array<any> = []
   private lastFlush = Date.now()
   private batchTimeout: any = null
 
-  constructor(private state: DurableObjectState, private env: { DB: D1Database; ENVIRONMENT?: string }) {
+  constructor(private state: DurableObjectState, private env: Env) {
     // Đảm bảo không xử lý request mới cho đến khi khôi phục xong dữ liệu chưa flush
     this.state.blockConcurrencyWhile(async () => {
       await this.recoverAndFlush()
@@ -13,6 +15,21 @@ export class ConversationDO implements DurableObject {
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url)
+
+    // Cập nhật trạng thái quét từ Queue Scanner
+    if (url.pathname === '/update-scan-status' && request.method === 'POST') {
+      try {
+        const { attachmentId, scanStatus } = await request.json<{ attachmentId: string; scanStatus: string }>()
+        this.broadcast({
+          type: 'scan_status_update',
+          attachment_id: attachmentId,
+          scan_status: scanStatus
+        })
+        return new Response('OK')
+      } catch (err: any) {
+        return new Response(err.message, { status: 400 })
+      }
+    }
 
     // WebSocket Upgrader Endpoint
     if (request.headers.get('Upgrade') === 'websocket') {
@@ -52,7 +69,7 @@ export class ConversationDO implements DurableObject {
           const msgId = crypto.randomUUID()
           const timestamp = Date.now()
 
-          const newMsg = {
+          const newMsg: any = {
             id: msgId,
             conversation_id: data.conversation_id,
             sender_id: userId,
@@ -63,6 +80,34 @@ export class ConversationDO implements DurableObject {
             reply_to_id: data.reply_to_id || null,
             created_at: timestamp,
             updated_at: timestamp
+          }
+
+          if (data.attachments && Array.isArray(data.attachments)) {
+            newMsg.attachments = data.attachments.map((att: any) => ({
+              id: crypto.randomUUID(),
+              message_id: msgId,
+              file_name: att.file_name,
+              file_size: att.file_size,
+              mime_type: att.mime_type,
+              r2_key: att.r2_key,
+              sha256: att.sha256 || null,
+              thumbnail_key: att.thumbnail_key || null,
+              scan_status: 'PENDING',
+              created_at: timestamp
+            }))
+          }
+
+          // Gửi tác vụ quét vào Queue cho mỗi tệp đính kèm
+          if (newMsg.attachments && this.env.VIRUS_SCAN_QUEUE) {
+            for (const att of newMsg.attachments) {
+              await this.env.VIRUS_SCAN_QUEUE.send({
+                attachmentId: att.id,
+                r2Key: att.r2_key,
+                fileName: att.file_name,
+                mimeType: att.mime_type,
+                conversationId: data.conversation_id
+              })
+            }
           }
 
           // 1. Lưu trữ buffer vào DO storage để tránh mất dữ liệu (Zero Data Loss)
@@ -143,22 +188,47 @@ export class ConversationDO implements DurableObject {
 
     try {
       // Chuẩn bị batch statements cho D1
-      const statements = toFlush.map(msg => {
-        return this.env.DB.prepare(
-          'INSERT INTO messages (id, conversation_id, sender_id, content, type, message_state, delivery_state, reply_to_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        ).bind(
-          msg.id,
-          msg.conversation_id,
-          msg.sender_id,
-          msg.content,
-          msg.type,
-          msg.message_state,
-          msg.delivery_state,
-          msg.reply_to_id,
-          msg.created_at,
-          msg.updated_at
+      const statements: any[] = []
+      for (const msg of toFlush) {
+        statements.push(
+          this.env.DB.prepare(
+            'INSERT INTO messages (id, conversation_id, sender_id, content, type, message_state, delivery_state, reply_to_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+          ).bind(
+            msg.id,
+            msg.conversation_id,
+            msg.sender_id,
+            msg.content,
+            msg.type,
+            msg.message_state,
+            msg.delivery_state,
+            msg.reply_to_id,
+            msg.created_at,
+            msg.updated_at
+          )
         )
-      })
+
+        if (msg.attachments && Array.isArray(msg.attachments)) {
+          for (const att of msg.attachments) {
+            statements.push(
+              this.env.DB.prepare(
+                'INSERT INTO attachments (id, message_id, file_name, file_size, mime_type, r2_key, sha256, thumbnail_key, download_count, scan_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+              ).bind(
+                att.id,
+                att.message_id,
+                att.file_name,
+                att.file_size,
+                att.mime_type,
+                att.r2_key,
+                att.sha256,
+                att.thumbnail_key,
+                0,
+                att.scan_status,
+                att.created_at
+              )
+            )
+          }
+        }
+      }
 
       // Thực thi ghi gộp (batch insert) vào D1
       await this.env.DB.batch(statements)
@@ -190,6 +260,19 @@ export class ConversationDO implements DurableObject {
         .all()
 
       const messages = results.results || []
+
+      // Tải kèm tệp tin đính kèm cho tin nhắn đồng bộ
+      if (messages.length > 0) {
+        const msgIds = messages.map(m => `'${m.id}'`).join(',')
+        const attResults = await this.env.DB.prepare(`
+          SELECT * FROM attachments WHERE message_id IN (${msgIds})
+        `).all()
+        const attachments = attResults.results || []
+        
+        for (const msg of messages) {
+          msg.attachments = attachments.filter(a => a.message_id === msg.id)
+        }
+      }
       
       // Gửi các tin nhắn bị thiếu cho client
       ws.send(JSON.stringify({

@@ -133,7 +133,8 @@ const MainApp: React.FC = () => {
           senderId: m.sender_id === user.id ? 'current-user' : friendId,
           content: m.content,
           timestamp: m.created_at,
-          type: m.type as 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
+          type: m.type as 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM',
+          attachments: m.attachments || []
         })).reverse(); // Đảo thứ tự để hiển thị từ cũ đến mới
         setMessages(friendId, mapped);
       }
@@ -247,9 +248,15 @@ const MainApp: React.FC = () => {
             senderId: raw.sender_id === user?.id ? 'current-user' : friendId,
             content: raw.content,
             timestamp: raw.created_at,
-            type: raw.type as 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
+            type: raw.type as 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM',
+            attachments: raw.attachments || []
           };
           useChatStore.getState().addMessage(friendId, mapped);
+        }
+
+        if (data.type === 'scan_status_update') {
+          const { attachment_id, scan_status } = data;
+          useChatStore.getState().updateAttachmentStatus(friendId, attachment_id, scan_status);
         }
 
         if (data.type === 'sync_response') {
@@ -261,7 +268,8 @@ const MainApp: React.FC = () => {
               senderId: raw.sender_id === user?.id ? 'current-user' : friendId,
               content: raw.content,
               timestamp: raw.created_at,
-              type: raw.type as 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
+              type: raw.type as 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM',
+              attachments: raw.attachments || []
             };
             useChatStore.getState().addMessage(friendId, mapped);
           });
@@ -294,8 +302,8 @@ const MainApp: React.FC = () => {
     };
   };
 
-  // Hàm gửi tin nhắn qua WebSocket
-  const handleSendMessage = (content: string) => {
+  // Hàm gửi tin nhắn qua WebSocket (hỗ trợ tệp đính kèm)
+  const handleSendMessage = (content: string, typeMsg: 'TEXT' | 'IMAGE' | 'FILE' = 'TEXT', attachments?: any[]) => {
     if (!activeFriendId) return;
     const convId = conversations[activeFriendId];
 
@@ -304,7 +312,8 @@ const MainApp: React.FC = () => {
         type: 'message',
         conversation_id: convId,
         content: content,
-        type_msg: 'TEXT'
+        type_msg: typeMsg,
+        attachments: attachments
       }));
     } else {
       showToast('Không có kết nối mạng ổn định để gửi tin nhắn.', 'error');
@@ -578,7 +587,11 @@ const MainApp: React.FC = () => {
             <div 
               className={`${activeFriendId ? 'block' : 'hidden md:block'} flex-1 h-full`}
             >
-              <ChatArea onSendMessage={handleSendMessage} />
+              <ChatArea 
+                onSendMessage={handleSendMessage} 
+                token={token} 
+                backendUrl={BACKEND_URL} 
+              />
             </div>
           </main>
         )}

@@ -80,6 +80,20 @@ conversations.get('/:id/messages', authMiddleware, async (c) => {
     `).bind(id, beforeTime, limit).all()
 
     const messages = results.results || []
+
+    // Tải kèm tệp tin đính kèm
+    if (messages.length > 0) {
+      const msgIds = messages.map(m => `'${m.id}'`).join(',')
+      const attResults = await c.env.DB.prepare(`
+        SELECT * FROM attachments WHERE message_id IN (${msgIds})
+      `).all()
+      const attachments = attResults.results || []
+      
+      for (const msg of messages) {
+        msg.attachments = attachments.filter((a: any) => a.message_id === msg.id)
+      }
+    }
+
     const nextCursor = messages.length === limit ? messages[messages.length - 1].created_at : null
 
     return c.json({

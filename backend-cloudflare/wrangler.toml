@@ -14,6 +14,22 @@ binding = "DB"
 database_name = "vivychat-db"
 database_id = "f86be2e4-e0c2-40f4-a4f6-ef41725b8492"
 
+# Binds a Cloudflare R2 Bucket
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "vivychat-media"
+
+# Binds a Cloudflare Queue as Producer
+[[queues.producers]]
+binding = "VIRUS_SCAN_QUEUE"
+queue = "vivychat-virus-scan"
+
+# Binds a Cloudflare Queue as Consumer
+[[queues.consumers]]
+queue = "vivychat-virus-scan"
+max_batch_size = 10
+max_batch_timeout = 5
+
 [vars]
 # GAS_WEBHOOK_URL được đưa vào env vars (hoặc có thể dùng wrangler secrets trong production)
 GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbySoZ9x17nId11aaEEshi6uHrg908JkCxqytnhnkmmsjBJuEWCwxdVFIlo3Q-RBoOYy/exec"

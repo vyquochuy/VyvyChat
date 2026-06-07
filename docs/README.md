@@ -38,4 +38,5 @@ Dự án này tuy nhỏ nhưng được xây dựng trên một kiến trúc hi�
 *   [**Phase 2: Hệ Thống Bạn Bè & Tìm Kiếm**](phase-records/phase_2_friend_system.md)
 *   [**Phase 3: Giao Diện Chat Cơ Bản**](phase-records/phase_3_basic_chat_interface.md)
 *   [**Phase 4: Hệ Thống Chat Cốt Lõi & Durable Objects**](phase-records/phase_4_core_chat_system.md)
+*   [**Phase 5: Chia Sẻ Tệp Đa Phương Tiện & Quét Mã Độc**](phase-records/phase_5_file_sharing_security.md)
 

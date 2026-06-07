@@ -1,11 +1,23 @@
 import { create } from 'zustand'
 
+export interface Attachment {
+  id: string
+  file_name: string
+  file_size: number
+  mime_type: string
+  r2_key: string
+  sha256?: string
+  thumbnail_key?: string
+  scan_status: 'PENDING' | 'CLEAN' | 'INFECTED'
+}
+
 export interface Message {
   id: string
   senderId: string
   content: string
   timestamp: number
   type: 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
+  attachments?: Attachment[]
 }
 
 interface ChatState {
@@ -21,6 +33,7 @@ interface ChatState {
   setConversationId: (friendId: string, conversationId: string) => void
   updatePresence: (friendId: string, status: string, lastSeen?: number) => void
   setOnlineFriends: (presenceMap: Record<string, { status: string; lastSeen?: number }>) => void
+  updateAttachmentStatus: (friendId: string, attachmentId: string, status: string) => void
   clearStore: () => void
 }
 
@@ -40,7 +53,8 @@ export const useChatStore = create<ChatState>((set) => ({
           senderId: senderId || 'current-user',
           content: messageOrContent,
           timestamp: Date.now(),
-          type: 'TEXT'
+          type: 'TEXT',
+          attachments: []
         }
       } else {
         newMessage = messageOrContent
@@ -96,6 +110,29 @@ export const useChatStore = create<ChatState>((set) => ({
         ...presenceMap
       }
     })),
+
+  updateAttachmentStatus: (friendId, attachmentId, status) =>
+    set((state) => {
+      const friendMessages = state.messages[friendId] || []
+      const updatedMessages = friendMessages.map((msg) => {
+        if (msg.attachments && msg.attachments.length > 0) {
+          const updatedAttachments = msg.attachments.map((att) => {
+            if (att.id === attachmentId) {
+              return { ...att, scan_status: status as any }
+            }
+            return att
+          })
+          return { ...msg, attachments: updatedAttachments }
+        }
+        return msg
+      })
+      return {
+        messages: {
+          ...state.messages,
+          [friendId]: updatedMessages
+        }
+      }
+    }),
 
   clearStore: () =>
     set({

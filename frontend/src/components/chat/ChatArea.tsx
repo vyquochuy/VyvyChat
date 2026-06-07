@@ -4,10 +4,12 @@ import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
 
 interface ChatAreaProps {
-  onSendMessage?: (content: string) => void
+  onSendMessage?: (content: string, typeMsg?: 'TEXT' | 'IMAGE' | 'FILE', attachments?: any[]) => void
+  token: string | null
+  backendUrl: string
 }
 
-export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage }) => {
+export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage, token, backendUrl }) => {
   const { activeFriendId, friends, messages, addMessage, setActiveFriendId, onlineFriends } = useChatStore()
 
   // Find selected friend details
@@ -35,9 +37,9 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage }) => {
   // Get active messages or fallback to empty array
   const friendMsgs = messages[activeFriendId] || []
 
-  const handleSend = (content: string) => {
+  const handleSend = (content: string, typeMsg?: 'TEXT' | 'IMAGE' | 'FILE', attachments?: any[]) => {
     if (onSendMessage) {
-      onSendMessage(content)
+      onSendMessage(content, typeMsg, attachments)
     } else {
       addMessage(activeFriendId, content, 'current-user')
     }
@@ -77,10 +79,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage }) => {
       </div>
 
       {/* Message List area */}
-      <MessageList messages={friendMsgs} />
+      <MessageList messages={friendMsgs} token={token} />
 
       {/* Input area */}
-      <MessageInput onSendMessage={handleSend} />
+      <MessageInput onSendMessage={handleSend} token={token} backendUrl={backendUrl} />
     </div>
   )
 }

@@ -6,6 +6,8 @@ export type Env = {
   CONVERSATION_DO: DurableObjectNamespace
   USER_PRESENCE_DO: DurableObjectNamespace
   ENVIRONMENT?: string
+  MEDIA_BUCKET: R2Bucket
+  VIRUS_SCAN_QUEUE: Queue<any>
 }
 
 export type Variables = {
