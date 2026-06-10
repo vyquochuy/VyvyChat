@@ -1,178 +1,137 @@
-# Email Verification Service
+# VivyChat - Serverless E2EE Realtime Messaging Platform
 
-<div align="center">
+VivyChat là một nền tảng nhắn tin thời gian thực 1-1 bảo mật, hoạt động trên kiến trúc Serverless (Edge Computing) của Cloudflare Workers kết hợp mã hóa đầu cuối (End-to-End Encryption - E2EE) mặc định ở phía Client.
 
-![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-200A3A?style=for-the-badge&logo=Cloudflare&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-
-**Backend Serverless sử dụng Cloudflare Workers để gửi và xác thực mã OTP qua Email.**
-
-[Tổng quan](#-mục-tiêu) • [Công nghệ](#-công-nghệ) • [Cấu trúc](#-cấu-trúc-thư-mục) • [Cài đặt & Cấu hình](#-cài-đặt--cấu-hình) • [Test Locally](#-test-local) • [Deploy](#-deploy-lên-cloudflare-cloud) • [Cấu hình GAS Webhook](#-cấu-hình-gas-webhook)
-
-</div>
+Dự án đảm bảo tính riêng tư tuyệt đối (Zero-Knowledge) nhờ việc tự thỏa thuận và mã hóa khóa trực tiếp trên trình duyệt của người dùng, cô lập hoàn toàn không gian lưu trữ khóa của các tài khoản khác nhau trên cùng một thiết bị.
 
 ---
 
-## 📋 Mục tiêu
+## Project Description
 
-Xây dựng một backend API hoàn toàn không máy chủ (Serverless) để xử lý quy trình xác thực email bằng Mã OTP (One-Time Password), được triển khai trên hạ tầng Cloudflare Workers.
+Hệ thống của VivyChat được phát triển và vận hành dựa trên sự kết hợp giữa kiến trúc biên đám mây (Edge Computing) và các tiêu chuẩn bảo mật mật mã học hiện đại.
 
-### Các chức năng chính:
-
-1.  **Send OTP**: Gửi mã OTP 6 chữ số ngẫu nhiên vào email người dùng chỉ định.
-2.  **Verify OTP**: Xác thực mã OTP người dùng nhập, kiểm tra tính hợp lệ và thời gian hết hạn (60 giây).
-3.  **Rate Limiting**: Tự động giới hạn tần suất gửi OTP (tối đa 1 lần/60 giây cho mỗi email) để chống spam.
-
----
-
-## 🧪 Công nghệ sử dụng
-
--   **Cloudflare Workers**: Nền tảng điện toán biên (Edge Computing) để chạy code gần người dùng.
--   **TypeScript**: Ngôn ngữ lập trình với kiểu dữ liệu tĩnh giúp tăng cường tính ổn định của code.
--   **wrangler CLI**: Công cụ dòng lệnh chính thức của Cloudflare để phát triển và deploy Worker.
--   **Cloudflare KV (Key-Value Store)**: Cơ sở dữ liệu NoSQL dạng key-value phân tán, được sử dụng để lưu trữ mã OTP và thông tin session tạm thời.
--   **Google Apps Script (GAS)**: Được tích hợp để gửi email thông qua Webhook (sử dụng hàm `MailApp.sendEmail`).
+### Các tính năng cốt lõi:
+- **Xác thực OTP Email bảo mật:** Quy trình đăng ký và khôi phục mật khẩu thông qua mã OTP 6 chữ số gửi qua email (sử dụng Google Apps Script làm webhook gửi mail), đi kèm cơ chế Rate Limiting chống spam và khóa tài khoản khi nhập sai OTP quá 5 lần.
+- **Mã hóa đầu cuối (E2EE) mặc định:** Sử dụng thuật toán trao đổi khóa ECDH P-256 để thỏa thuận Shared Secret và mã hóa tin nhắn bằng AES-256-GCM trực tiếp ở client. Máy chủ trung gian chỉ chuyển tiếp ciphertext và không có khả năng đọc thô tin nhắn.
+- **Cô lập khóa đa tài khoản trên cùng thiết bị:** Khóa E2EE được lưu dưới dạng đối tượng gộp không thể trích xuất (`extractable: false`) trong IndexedDB có cấu trúc `e2ee:${userId}`, ngăn ngừa rò rỉ hoặc ghi đè khóa chéo giữa các phiên đăng nhập khác nhau trên cùng trình duyệt.
+- **Đồng bộ và xoay vòng khóa (Key Rotation):** Hỗ trợ sao lưu khóa bí mật lên server thông qua mã hóa PBKDF2 (260.000 vòng) bảo vệ bằng Recovery Password. Hỗ trợ xoay vòng khóa để đảm bảo tính an toàn dài hạn (Forward Secrecy).
+- **Trò chuyện thời gian thực độ trễ thấp:** Kết nối WebSocket thông qua Cloudflare Durable Objects giúp đồng bộ tin nhắn tức thời, cập nhật trạng thái hoạt động (online/offline) và hiển thị chỉ báo đang gõ phím (Typing Indicator).
 
 ---
 
-## 📂 Cấu trúc thư mục
-
-```
-email-verify-worker/
-├── src/
-│   ├── index.ts           # Entry point - Định nghĩa routes API (sendOTP, verifyOTP)
-│   └── worker.ts          # Logic chính: Business logic, request handling, KV operations
-├── package.json           # Khai báo dependencies và scripts
-├── tsconfig.json          # Cấu hình TypeScript
-├── wrangler.toml          # Cấu hình tài nguyên Cloudflare (KV, secrets)
-└── AGENT.md               # Tài liệu hướng dẫn làm việc với AI
-```
+## Table of Contents
+1. [Project Description](#project-description)
+2. [How to Install and Run the Project](#how-to-install-and-run-the-project)
+3. [How to Use the Project](#how-to-use-the-project)
+4. [Include Tests](#include-tests)
+5. [How to Contribute to the Project](#how-to-contribute-to-the-project)
+6. [Include Credits](#include-credits)
+7. [Add a License](#add-a-license)
 
 ---
 
-## 🚀 Cài đặt & Cấu hình
+## How to Install and Run the Project
 
-### Bước 1: Cài đặt Dependencies
+Dự án được tổ chức dưới dạng monorepo chứa cả mã nguồn Frontend và Backend Cloudflare Workers.
 
-Mở terminal trong thư mục gốc dự án và chạy:
+### Yêu cầu hệ thống:
+- [Node.js](https://nodejs.org/) v18 trở lên.
+- [Cloudflare Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) cài đặt toàn cục hoặc chạy qua `npx`.
 
+### 1. Cài đặt dependencies
+Tại thư mục gốc của dự án, chạy lệnh sau để cài đặt toàn bộ dependencies cho cả frontend và backend:
 ```bash
-npm install
+npm run install:all
 ```
 
-### Bước 2: Kết nối Cloudflare Tài khoản
-
-Để chạy và deploy Worker, bạn cần xác thực tài khoản Cloudflare. Chạy lệnh sau và làm theo hướng dẫn:
-
+### 2. Thiết lập cơ sở dữ liệu D1 nội bộ (Local DB)
+Di chuyển vào thư mục backend và chạy migrations để khởi tạo cấu trúc cơ sở dữ liệu SQLite cục bộ:
 ```bash
-npx wrangler login
+cd backend-cloudflare
+npx wrangler d1 migrations apply vivychat-db --local
 ```
 
-### Bước 3: Cấu hình Wrangler (wrangler.toml)
-
-Mở file `wrangler.toml`. Bạn cần đảm bảo phần cấu hình `[[kv_namespaces]]` đã chính xác với tài nguyên KV của bạn trên Cloudflare Dashboard.
-
-```toml
-# ... (Các phần khác giữ nguyên) ...
-
-[[kv_namespaces]]
-binding = "OTP_KV"
-id = "<ID-Tài-nguyên-KV-của-bạn>"
-# Ví dụ: id = "13ac87ee4dd8484faafc9613dce6a795"
-
-[vars]
-# Link Webhook của Google Apps Script (Sẽ cấu hình ở Bước 5)
-# GAS_WEBHOOK_URL = "<YOUR-GAS-WEBHOOK-URL>"
-```
-
-> **Lưu ý:** Nếu bạn chưa tạo KV Namespace, hãy vào **Cloudflare Dashboard** -> **Workers & Pages** -> Chọn Worker -> **Settings** -> **Variables** -> **KV Namespace** để tạo mới, sau đó cập nhật ID vào file này.
-
----
-
-## 💻 Test Local
-
-Wrangler cho phép bạn mô phỏng môi trường Cloudflare ngay trên máy tính.
-
-### 1. Chạy chế độ Development
-
-Lệnh này sẽ khởi động một server local, thường ở cổng 8787 hoặc 9999.
-
+### 3. Chạy Backend (Local Dev)
+Chạy server backend cục bộ mô phỏng Cloudflare Workers & Durable Objects tại cổng `8787`:
 ```bash
-npx wrangler dev
+# Tại thư mục backend-cloudflare hoặc chạy lệnh ở gốc monorepo:
+npm run dev
 ```
 
-Khi server chạy, terminal sẽ hiển thị URL local (ví dụ: `http://localhost:8787`). Bạn có thể dùng API Testing tools như Postman, Insomnia hoặc Flutter app để gọi đến URL này để test.
-
-### 2. Sử dụng Mock Variables (Tùy chọn)
-
-Tạo file `.dev.vars` trong thư mục dự án (nếu chưa có) để định nghĩa các biến môi trường dùng riêng cho local dev:
-
-```env
-# .dev.vars
-GAS_WEBHOOK_URL=https://example.com/mock-webhook-url
+### 4. Chạy Frontend (Vite Dev Server)
+Mở một terminal mới, chuyển vào thư mục frontend và chạy Vite development server tại cổng `5173`:
+```bash
+# Tại thư mục frontend hoặc chạy lệnh ở gốc monorepo:
+npm run dev
 ```
 
 ---
 
-## 🔮 Deploy lên Cloudflare Cloud
+## How to Use the Project
 
-Khi đã hoàn thành cấu hình và kiểm thử local thành công, bạn có thể đẩy ứng dụng lên Cloudflare:
+### 1. Đăng ký & Kích hoạt tài khoản
+- Truy cập giao diện tại `http://localhost:5173`.
+- Điền email nhận mã OTP. Sau khi mã OTP được gửi về hòm thư, điền mã OTP và thông tin tài khoản để hoàn thành đăng ký.
 
-```bash
-npm run deploy
-```
+### 2. Thiết lập mã hóa đầu cuối (E2EE)
+- Sau khi đăng nhập, di chuyển sang tab Bảo mật (biểu tượng 🔒) trên thanh Sidebar.
+- Nhập mật khẩu khôi phục khóa (Recovery Password - tối thiểu 8 ký tự). Nhấp **Setup Encryption** để sinh cặp khóa mật mã. Khóa công khai của bạn sẽ được tải lên server, còn khóa bí mật sẽ được lưu an toàn trong IndexedDB của trình duyệt.
 
-### Lời khuyên sau khi Deploy
-
--   **Thời gian đồng bộ**: Sau khi deploy lần đầu, Cloudflare cần **5 - 15 phút** để kích hoạt và đồng bộ chứng chỉ SSL cho Subdomain mới. Bạn có thể gặp lỗi `ERR_SSL_VERSION_OR_CIPHER_MISMATCH` ngay lúc đầu, hãy chờ một chút rồi thử lại.
--   **Lấy URL Production**: Sau khi deploy, Terminal sẽ hiển thị URL production (ví dụ: `https://account-manager-backend.your-subdomain.workers.dev`). Hãy sử dụng link này trong ứng dụng Flutter của bạn.
+### 3. Kết bạn và Nhắn tin bảo mật
+- Di chuyển sang tab **Tìm** để tìm kiếm bạn bè thông qua UID hoặc email.
+- Nhấp **Kết bạn**. Sau khi đối phương chấp nhận lời mời, hai người có thể nhấp vào tên nhau để bắt đầu cuộc trò chuyện.
+- Trình duyệt sẽ tự động thực hiện tính toán Shared Secret với khóa công khai của đối phương và mã hóa tất cả tin nhắn gửi đi dưới dạng AES-GCM. Bạn sẽ thấy chỉ báo đang gõ phím (Typing Indicator) và nhận thông báo Toast thời gian thực khi có tin nhắn mới từ người khác.
 
 ---
 
-## 🔗 Cấu hình GAS Webhook (Google Apps Script)
+## Include Tests
 
-Để ứng dụng gửi được email, bạn cần một Web App trong Google Apps Script nhận request và gửi email thay mặt bạn.
+Dự án sử dụng TypeScript nghiêm ngặt và Vite để kiểm thử tính khả thi của mã nguồn.
 
-### Hướng dẫn tạo Web App:
+### 1. Kiểm tra biên dịch TypeScript
+Kiểm tra tĩnh xem mã nguồn có lỗi kiểu dữ liệu nào không bằng cách chạy:
+```bash
+# Kiểm tra frontend
+npm run build --prefix frontend
 
-1.  Truy cập [Google Apps Script Editor](https://script.google.com).
-2.  Tạo một dự án mới.
-3.  Paste đoạn code dưới đây vào file `Code.gs`:
+# Kiểm tra backend
+npx wrangler dev --prefix backend-cloudflare
+```
 
-```javascript
-// Code.gs - GAS Web App for Email Verification
+### 2. Kiểm thử thủ công luồng E2EE đa thiết bị
+- **Bước 1:** Đăng nhập Tài khoản A trên Trình duyệt 1 (ví dụ Chrome), thiết lập E2EE thành công và gửi tin nhắn.
+- **Bước 2:** Đăng nhập Tài khoản B trên Trình duyệt 2 (ví dụ Firefox), thiết lập E2EE và phản hồi tin nhắn.
+- **Bước 3:** Đăng xuất và đăng nhập tài khoản khác trên cùng trình duyệt để xác minh khóa cũ không bị lấy nhầm hay đọc trộm (Multi-account isolation).
 
-// Tên miền miền trắng (whitelist) của bạn
-const WHITELIST = ['example.com', 'gmail.com'];
+---
 
-// Hàm xử lý HTTP GET request (để gửi email)
-function doGet(e) {
-  try {
-    const query = e.parameter;
+## How to Contribute to the Project
 
-    // 1. Kiểm tra email bắt buộc
-    const to = query.to;
-    if (!to) return ContentService.createTextOutput(JSON.stringify({
-      success: false, 
-      error: "Missing 'to' parameter (email address)."
-    })).setMimeType(ContentService.MimeType.JSON);
+Mọi đóng góp cho dự án đều được chào đón. Quy trình đóng góp diễn ra như sau:
 
-    // 2. Kiểm tra tên miền: Chỉ cho phép các miền trong whitelist
-    const emailDomain = to.split('@')[1];
-    if (!emailDomain || !WHITELIST.includes(emailDomain)) {
-      return ContentService.createTextOutput(JSON.stringify({
-        success: false, 
-        error: "Domain not allowed for security reasons."
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
+1. **Fork** dự án này về tài khoản cá nhân của bạn.
+2. Tạo một nhánh mới từ `master` để thực hiện sửa đổi:
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. Commit các thay đổi của bạn với thông điệp rõ ràng theo chuẩn Conventional Commits (ví dụ: `feat(ui): add new encryption status indicators`).
+4. Kiểm tra biên dịch thành công (`npm run build`) trước khi đẩy code.
+5. Thực hiện **Push** nhánh lên Fork của bạn và tạo một **Pull Request** giải trình rõ ràng các nội dung chỉnh sửa để được phê duyệt.
 
-    const subject = query.subject || "Mã OTP Xác thực";
-    const body = query.body || "Không có nội dung. Vui lòng kiểm tra lại.";
+---
 
-    // 3. Gửi email bằng tài khoản Google của bạn
-    MailApp.sendEmail(to, subject, body);
+## Include Credits
 
-    return ContentService.createTextOutput(JSON.stringify({success: true}));
-  } catch (err) {
-    return ContentService
+Dự án VivyChat chân thành cảm ơn các công nghệ, thư viện nguồn mở và nền tảng dưới đây đã hỗ trợ kiến tạo ứng dụng:
+
+- **W3C Web Crypto API:** Cung cấp các hàm mã hóa phần cứng native bảo mật cao chạy trực tiếp trên trình duyệt.
+- **Cloudflare Edge Platform:** Wrangler, Workers, Durable Objects, và D1 Database làm nền tảng serverless mạnh mẽ và tối ưu độ trễ.
+- **Hono Framework:** Web framework siêu nhẹ giúp định tuyến API sạch và hiệu quả trên Edge.
+- **React & TypeScript:** Nền tảng xây dựng UI động và đảm bảo tính chặt chẽ của mã nguồn.
+- **Zustand:** Thư viện quản lý state tối giản nhưng mạnh mẽ cho React.
+
+---
+
+## Add a License
+
+Dự án VivyChat được phân phối và cấp phép dưới **Giấy phép MIT** (MIT License). Xem chi tiết điều khoản sử dụng trong tệp tin `LICENSE` nếu có.
