@@ -7,7 +7,7 @@
 
 ## 1. Mục tiêu Phase
 
-Nâng cấp hệ thống chat VivyChat lên chuẩn bảo mật E2EE mặc định cho toàn bộ tin nhắn (giống Signal/WhatsApp), đồng thời tích hợp các tính năng realtime nâng cao: Typing Indicator và Toast Notification cho tin nhắn từ phòng chat không đang mở.
+Nâng cấp hệ thống chat VivyChat lên chuẩn bảo mật E2EE mặc định cho toàn bộ tin nhắn, đồng thời tích hợp các tính năng realtime nâng cao: Typing Indicator và Toast Notification cho tin nhắn từ phòng chat không đang mở.
 
 ---
 
@@ -206,24 +206,14 @@ Dùng `{ "encrypted": true, "ciphertext": "...", ... }` thay vì `__E2EE__:ciphe
 - **Typing**: `ConversationDO.broadcastExcept()` — gửi trong phòng, không ra ngoài
 - **Toast**: `ConversationDO` → `UserPresenceDO.send-notification` → Presence WebSocket → Client — luồng cross-DO
 
-### 7.7 Cô lập không gian lưu trữ IndexedDB theo từng tài khoản (Multi-account isolation)
-- Lưu trữ gộp tất cả các trường khóa E2EE (`privateKey`, `publicKeyJwk`, `keyVersion`) thành một đối tượng duy nhất dạng `StoredKeyData` dưới khóa có dạng `e2ee:${userId}`.
-- Việc này giúp các tài khoản khác nhau trên cùng một thiết bị không bị ghi đè hoặc đọc nhầm khóa E2EE của nhau.
-
-### 7.8 Unmount Provider và Giải phóng Runtime Cache
-- Đưa `SecretChatProvider` vào bên trong `Dashboard` thay vì cấp độ gốc. Khi người dùng đăng xuất, component `Dashboard` unmount sẽ tự động giải phóng toàn bộ `useRef` lưu cache (`sharedKeyCache`, `publicKeyHistoryCache`) và state E2EE khỏi bộ nhớ.
-
-### 7.9 Cơ chế giải mã tin nhắn tự gửi (Self-decryption)
-- Khi giải mã tin nhắn, phân biệt cờ `isOutgoing` để so khớp chính xác khóa cần dùng. Người gửi dùng `senderKeyVersion` để so sánh với khóa hiện tại, người nhận dùng `recipientKeyVersion`.
-
 ---
 
 ## 8. Verification Checklist
 
 - [x] TypeScript compile thành công (`npx tsc --noEmit`)
 - [x] D1 migration áp dụng thành công (local)
-- [x] Kiểm tra E2EE end-to-end: ciphertext trong D1
-- [x] Kiểm tra Typing Indicator animation giữa 2 client
-- [x] Kiểm tra Toast Notification khi nhận tin nhắn từ phòng khác
-- [x] Kiểm tra luồng khôi phục thiết bị mới (Recovery Password)
-- [x] Kiểm tra luồng Reset Encryption (Key Rotation)
+- [ ] Kiểm tra E2EE end-to-end: ciphertext trong D1
+- [ ] Kiểm tra Typing Indicator animation giữa 2 client
+- [ ] Kiểm tra Toast Notification khi nhận tin nhắn từ phòng khác
+- [ ] Kiểm tra luồng khôi phục thiết bị mới (Recovery Password)
+- [ ] Kiểm tra luồng Reset Encryption (Key Rotation)
