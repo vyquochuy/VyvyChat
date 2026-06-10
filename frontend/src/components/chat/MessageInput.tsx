@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react'
+import { useSocket } from '../../providers/SocketProvider'
 
 interface MessageInputProps {
   onSendMessage: (content: string, typeMsg?: 'TEXT' | 'IMAGE' | 'FILE', attachments?: any[]) => void
@@ -11,12 +12,30 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [uploadFileName, setUploadFileName] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const typingTimerRef = useRef<any>(null)
+
+  // Lấy sendTypingStatus từ context Socket
+  const { sendTypingStatus } = useSocket()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!value.trim()) return
+    // Tắt typing indicator ngay khi gửi
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+    sendTypingStatus(false)
     onSendMessage(value.trim())
     setValue('')
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value)
+    // Gửi tín hiệu đang gõ phím
+    sendTypingStatus(true)
+    // Debounce 3 giây: sau 3s không gõ thì gửi typing: false
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+    typingTimerRef.current = setTimeout(() => {
+      sendTypingStatus(false)
+    }, 3000)
   }
 
   const handleAttachmentClick = () => {
@@ -181,7 +200,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
         type="text"
         placeholder={uploadProgress !== null ? "Vui lòng đợi tải lên..." : "Nhập tin nhắn..."}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={handleInputChange}
         disabled={uploadProgress !== null}
         className="flex-1 bg-[var(--bg-input)] 
         border border-white/5 rounded-[20px] px-[18px] py-[10px] text-white text-sm outline-none text-left 

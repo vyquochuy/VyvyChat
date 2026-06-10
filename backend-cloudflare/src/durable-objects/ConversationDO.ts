@@ -65,6 +65,18 @@ export class ConversationDO implements DurableObject {
           return
         }
 
+        // ============================================================
+        // Typing Indicator: Broadcast trạng thái gõ đến các thành viên khác
+        // ============================================================
+        if (data.type === 'typing') {
+          this.broadcastExcept(ws, {
+            type: 'typing',
+            sender_id: userId,
+            isTyping: data.isTyping === true
+          })
+          return
+        }
+
         if (data.type === 'message') {
           const msgId = crypto.randomUUID()
           const timestamp = Date.now()
@@ -131,6 +143,9 @@ export class ConversationDO implements DurableObject {
           } else {
             this.scheduleFlush(flushInterval - elapsed)
           }
+
+          // 5. Gửi Toast Notification cho thành viên đang online nhưng không trong phòng chat
+          this.state.waitUntil(this.pushNotificationsToAbsentMembers(data.conversation_id, userId, newMsg))
         }
 
         // Xử lý Client gửi yêu cầu đồng bộ tin nhắn (sync)
@@ -167,6 +182,63 @@ export class ConversationDO implements DurableObject {
       } catch (err) {
         this.sessions.delete(ws)
       }
+    }
+  }
+
+  // Broadcast đến tất cả trừ người gửi (để gửi typing indicator)
+  private broadcastExcept(sender: WebSocket, data: any) {
+    const payload = JSON.stringify(data)
+    for (const [ws] of this.sessions.entries()) {
+      if (ws === sender) continue
+      try {
+        ws.send(payload)
+      } catch (err) {
+        this.sessions.delete(ws)
+      }
+    }
+  }
+
+  // Gửi Toast Notification đến các thành viên không đang trong phòng chat
+  private async pushNotificationsToAbsentMembers(conversationId: string, senderId: string, message: any) {
+    try {
+      // Lấy danh sách thành viên phòng chat từ D1
+      const members = await this.env.DB.prepare(
+        'SELECT user_id FROM conversation_members WHERE conversation_id = ?'
+      ).bind(conversationId).all()
+
+      const memberIds = (members.results || []).map((m: any) => m.user_id) as string[]
+
+      // Tập hợp userId đang có WebSocket mở trong phòng chat này
+      const connectedUserIds = new Set<string>()
+      for (const [, session] of this.sessions.entries()) {
+        connectedUserIds.add(session.userId)
+      }
+
+      // Với các thành viên không kết nối vào phòng này, thử gửi thông báo qua UserPresenceDO
+      for (const memberId of memberIds) {
+        if (memberId === senderId) continue
+        if (connectedUserIds.has(memberId)) continue
+
+        try {
+          const presenceId = this.env.USER_PRESENCE_DO.idFromName(memberId)
+          const presenceStub = this.env.USER_PRESENCE_DO.get(presenceId)
+
+          await presenceStub.fetch(new Request('http://internal/send-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'new_message',
+              conversation_id: conversationId,
+              sender_id: senderId,
+              message
+            })
+          }))
+        } catch (err) {
+          // Thành viên offline hoặc không có instance Presence → bỏ qua
+        }
+      }
+    } catch (err) {
+      console.error('[DO Notify] Failed to push notifications:', err)
     }
   }
 

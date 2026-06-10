@@ -17,15 +17,15 @@ friends.get('/users/search', authMiddleware, async (c) => {
   if (/^\d+$/.test(query)) {
     const uidVal = parseInt(query, 10)
     users = await c.env.DB.prepare(
-      'SELECT id, display_name, email, uid, avatar_url, bio FROM users WHERE uid = ? AND id != ?'
+      'SELECT id, display_name, email, uid, avatar_url, bio, public_key, key_version FROM users WHERE uid = ? AND id != ?'
     ).bind(uidVal, currentUser.id).all().then(r => r.results)
   } else if (query.includes('@')) {
     users = await c.env.DB.prepare(
-      'SELECT id, display_name, email, uid, avatar_url, bio FROM users WHERE email = ? AND id != ?'
+      'SELECT id, display_name, email, uid, avatar_url, bio, public_key, key_version FROM users WHERE email = ? AND id != ?'
     ).bind(query.toLowerCase(), currentUser.id).all().then(r => r.results)
   } else {
     users = await c.env.DB.prepare(
-      'SELECT id, display_name, email, uid, avatar_url, bio FROM users WHERE display_name LIKE ? AND id != ? LIMIT 20'
+      'SELECT id, display_name, email, uid, avatar_url, bio, public_key, key_version FROM users WHERE display_name LIKE ? AND id != ? LIMIT 20'
     ).bind(`%${query}%`, currentUser.id).all().then(r => r.results)
   }
 
@@ -61,7 +61,9 @@ friends.get('/users/search', authMiddleware, async (c) => {
       uid: u.uid,
       avatarUrl: u.avatar_url,
       bio: u.bio,
-      relationStatus
+      relationStatus,
+      publicKey: (u as any).public_key || null,
+      keyVersion: (u as any).key_version ?? 1
     }
   }))
 
@@ -168,7 +170,7 @@ friends.get('/friends', authMiddleware, async (c) => {
     const friendsList = await Promise.all(friendships.map(async (f) => {
       const friendId = f.user_id_1 === currentUser.id ? f.user_id_2 : f.user_id_1
       const friend = await c.env.DB.prepare(
-        'SELECT id, display_name, email, uid, avatar_url, bio FROM users WHERE id = ?'
+        'SELECT id, display_name, email, uid, avatar_url, bio, public_key, key_version FROM users WHERE id = ?'
       ).bind(friendId).first<{
         id: string
         display_name: string
@@ -176,6 +178,8 @@ friends.get('/friends', authMiddleware, async (c) => {
         uid: number
         avatar_url: string | null
         bio: string | null
+        public_key: string | null
+        key_version: number | null
       }>()
 
       return {
@@ -186,7 +190,9 @@ friends.get('/friends', authMiddleware, async (c) => {
         uid: friend?.uid,
         avatarUrl: friend?.avatar_url,
         bio: friend?.bio,
-        relationStatus: 'ACCEPTED'
+        relationStatus: 'ACCEPTED',
+        publicKey: friend?.public_key || null,
+        keyVersion: friend?.key_version ?? 1
       }
     }))
 
@@ -294,6 +300,20 @@ friends.post('/friends/respond', authMiddleware, async (c) => {
     } else {
       return c.json({ error: 'Hành động không hợp lệ. Chỉ chấp nhận ACCEPT hoặc DECLINE.' }, 400)
     }
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
+// API: Lấy toàn bộ lịch sử khóa công khai của một người dùng (phục vụ giải mã tin nhắn cũ)
+friends.get('/users/:id/public-keys', authMiddleware, async (c) => {
+  try {
+    const targetId = c.req.param('id')
+    const results = await c.env.DB.prepare(
+      'SELECT key_version, public_key, created_at FROM user_public_keys WHERE user_id = ? ORDER BY key_version DESC'
+    ).bind(targetId).all()
+
+    return c.json(results.results || [])
   } catch (error: any) {
     return c.json({ error: error.message }, 500)
   }

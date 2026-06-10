@@ -570,13 +570,47 @@ Giao diện áp dụng Responsive Grid Layout:
 
 
 
-### Phase 6: Tính năng Realtime nâng cao & Mã hóa (Advanced Realtime & Encryption)
+### Phase 6: Realtime nâng cao & Mã hóa đầu cuối (Advanced Realtime & End-to-End Encryption)
 
-* **Mục tiêu**: Tối ưu trải nghiệm người dùng với các trạng thái thời gian thực và áp dụng bảo mật cấp cao cho nội dung tin nhắn.
+* **Mục tiêu**: Nâng cao trải nghiệm thời gian thực của hệ thống chat và triển khai cơ chế Mã hóa đầu cuối (End-to-End Encryption - E2EE) để đảm bảo chỉ người gửi và người nhận mới có thể đọc được nội dung tin nhắn.
+
 * **Thời gian dự kiến**: Tuần 6.
+
 * **Deliverables**:
-* Sự kiện WebSocket truyền đi trạng thái "đang nhập tin nhắn" (typing) và thông báo đẩy (Toast Notification) trên Client.
-* **Mã hóa đầu cuối (End-to-End Encryption)**: Tích hợp Web Crypto API ở Frontend. Tin nhắn được mã hóa bằng chuẩn `AES-256-GCM` trước khi đẩy qua WebSocket. Hệ thống (Durable Objects và D1) chỉ lưu trữ bản mã (Ciphertext).
+
+#### Realtime Experience
+
+* Triển khai trạng thái **Đang nhập tin nhắn (Typing Indicator)** thông qua WebSocket.
+* Hiển thị **Toast Notification** khi nhận tin nhắn mới từ cuộc trò chuyện khác đang không được mở.
+* Tối ưu đồng bộ trạng thái realtime giữa các client đang kết nối cùng một cuộc hội thoại.
+
+#### End-to-End Encryption (E2EE)
+
+* Tích hợp **Web Crypto API** tại Frontend.
+* Mỗi người dùng sở hữu một cặp khóa mật mã riêng:
+
+  * Public Key được lưu trên máy chủ để phục vụ trao đổi khóa.
+  * Private Key được mã hóa bằng Recovery Password trước khi sao lưu lên hệ thống.
+* Tin nhắn được mã hóa tại Client trước khi gửi qua WebSocket.
+* Durable Objects, D1 Database và Backend API chỉ xử lý và lưu trữ dữ liệu ở dạng Ciphertext.
+* Máy chủ không có khả năng giải mã nội dung tin nhắn của người dùng.
+
+#### Device Recovery & Key Management
+
+* Hỗ trợ khôi phục khóa mã hóa trên thiết bị mới bằng Recovery Password.
+* Private Key được sao lưu dưới dạng mã hóa và chỉ có thể giải mã tại Client.
+* Nếu người dùng quên Recovery Password:
+
+  * Có thể tạo cặp khóa mới (Key Rotation / Reset Encryption).
+  * Tiếp tục gửi và nhận tin nhắn mới bình thường.
+  * Mất khả năng giải mã các tin nhắn được mã hóa bằng khóa cũ.
+
+#### Security Verification
+
+* Xác minh toàn bộ tin nhắn trong D1 chỉ tồn tại dưới dạng Ciphertext.
+* Kiểm tra luồng khôi phục thiết bị mới bằng Recovery Password.
+* Kiểm tra luồng Reset Encryption và xoay vòng khóa.
+* Đảm bảo máy chủ không thể đọc được nội dung tin nhắn trong bất kỳ trường hợp nào.
 
 
 

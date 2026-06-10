@@ -1,9 +1,11 @@
+import { Env } from '../types/env'
+
 export class UserPresenceDO implements DurableObject {
   private sessions = new Set<WebSocket>()
   private status = 'offline'
   private lastSeen = Date.now()
 
-  constructor(private state: DurableObjectState, private env: { DB: D1Database }) {
+  constructor(private state: DurableObjectState, private env: Env) {
     // Đọc trạng thái từ DO storage nếu có sẵn để giữ tính nhất quán khi khởi động lại
     this.state.blockConcurrencyWhile(async () => {
       this.lastSeen = (await this.state.storage.get<number>('lastSeen')) || Date.now()
@@ -13,6 +15,33 @@ export class UserPresenceDO implements DurableObject {
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url)
+
+    // ============================================================
+    // HTTP Endpoint: Nhận Toast Notification từ ConversationDO
+    // Gửi sự kiện new_message đến tất cả các kết nối Presence của User
+    // ============================================================
+    if (url.pathname === '/send-notification' && request.method === 'POST') {
+      try {
+        const payload = await request.json()
+        const message = JSON.stringify(payload)
+
+        let delivered = 0
+        for (const ws of this.sessions) {
+          try {
+            ws.send(message)
+            delivered++
+          } catch {
+            this.sessions.delete(ws)
+          }
+        }
+
+        return new Response(JSON.stringify({ delivered }), {
+          headers: { 'Content-Type': 'application/json' }
+        })
+      } catch (err: any) {
+        return new Response(err.message, { status: 400 })
+      }
+    }
 
     // WebSocket Upgrader Endpoint
     if (request.headers.get('Upgrade') === 'websocket') {

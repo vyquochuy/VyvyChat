@@ -10,7 +10,7 @@ interface ChatAreaProps {
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage, token, backendUrl }) => {
-  const { activeFriendId, friends, messages, addMessage, setActiveFriendId, onlineFriends } = useChatStore()
+  const { activeFriendId, friends, messages, addMessage, setActiveFriendId, onlineFriends, typingFriends } = useChatStore()
 
   // Find selected friend details
   const activeFriend = friends.find((f) => f.id === activeFriendId)
@@ -64,7 +64,17 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage, token, backen
           <h3 className="text-[15px] font-bold text-white m-0">
             {activeFriend.displayName}
           </h3>
-          {onlineFriends[activeFriendId]?.status === 'online' ? (
+          {/* Typing Indicator – hiuển thị khi bạn bè đang gõ phím */}
+          {typingFriends[activeFriendId] ? (
+            <span className="text-[11px] text-[var(--color-cyan)] flex items-center gap-1.5 mt-0.5">
+              <span className="flex gap-[3px] items-center">
+                <span className="w-1 h-1 bg-[var(--color-cyan)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1 h-1 bg-[var(--color-cyan)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1 h-1 bg-[var(--color-cyan)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </span>
+              Đang nhập...
+            </span>
+          ) : onlineFriends[activeFriendId]?.status === 'online' ? (
             <span className="text-[11px] text-[var(--color-success)] flex items-center gap-1 mt-0.5">
               <span className="w-1.5 h-1.5 bg-[var(--color-success)] rounded-full" />
               Trực tuyến

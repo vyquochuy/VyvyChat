@@ -374,4 +374,90 @@ auth.post('/reset-password', async (c) => {
   }
 })
 
+// API: Thiết lập hoặc xoay vòng cặp khóa E2EE của người dùng hiện tại
+auth.post('/keys/setup', async (c) => {
+  try {
+    const jwtSecret = c.env.JWT_SECRET || 'vivychat_jwt_secret_key'
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+    const token = authHeader.slice(7)
+    const { verify } = await import('hono/jwt')
+    const payload = await verify(
+      token,
+      jwtSecret,
+      'HS256'
+    ) as { id: string; email: string }
+
+    const { publicKey, encryptedPrivateKey, recoverySalt, keyVersion } = await c.req.json<{
+      publicKey: string
+      encryptedPrivateKey: string
+      recoverySalt: string
+      keyVersion: number
+    }>()
+
+    if (!publicKey || !encryptedPrivateKey || !recoverySalt || !keyVersion) {
+      return c.json({ error: 'Thiếu thông tin khóa mã hóa.' }, 400)
+    }
+
+    const now = Date.now()
+
+    // 1. Cập nhật cột khóa hiện tại vào bảng users
+    await c.env.DB.prepare(
+      'UPDATE users SET public_key = ?, encrypted_private_key = ?, recovery_salt = ?, key_version = ?, updated_at = ? WHERE id = ?'
+    ).bind(publicKey, encryptedPrivateKey, recoverySalt, keyVersion, now, payload.id).run()
+
+    // 2. Thêm hoặc cập nhật dòng phiên bản khóa công khai vào bảng lịch sử
+    await c.env.DB.prepare(
+      'INSERT OR REPLACE INTO user_public_keys (user_id, key_version, public_key, created_at) VALUES (?, ?, ?, ?)'
+    ).bind(payload.id, keyVersion, publicKey, now).run()
+
+    return c.json({ message: 'Thiết lập khóa mã hóa thành công.', keyVersion })
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
+// API: Lấy thông tin cặp khóa E2EE để khôi phục trên thiết bị mới
+auth.get('/keys', async (c) => {
+  try {
+    const jwtSecret = c.env.JWT_SECRET || 'vivychat_jwt_secret_key'
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+    const token = authHeader.slice(7)
+    const { verify } = await import('hono/jwt')
+    const payload = await verify(
+      token,
+      jwtSecret,
+      'HS256'
+    ) as { id: string; email: string }
+
+    const user = await c.env.DB.prepare(
+      'SELECT public_key, encrypted_private_key, recovery_salt, key_version FROM users WHERE id = ?'
+    ).bind(payload.id).first<{
+      public_key: string | null
+      encrypted_private_key: string | null
+      recovery_salt: string | null
+      key_version: number | null
+    }>()
+
+    if (!user || !user.public_key) {
+      return c.json({ hasKeys: false })
+    }
+
+    return c.json({
+      hasKeys: true,
+      publicKey: user.public_key,
+      encryptedPrivateKey: user.encrypted_private_key,
+      recoverySalt: user.recovery_salt,
+      keyVersion: user.key_version ?? 1
+    })
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
 export default auth

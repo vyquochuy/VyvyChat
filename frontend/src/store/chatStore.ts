@@ -25,6 +25,7 @@ interface ChatState {
   conversations: Record<string, string> // friendId -> conversationId
   messages: Record<string, Message[]> // friendId -> Message[]
   onlineFriends: Record<string, { status: string; lastSeen?: number }> // friendId -> presence
+  typingFriends: Record<string, boolean> // friendId -> isTyping
   friends: any[]
   addMessage: (friendId: string, messageOrContent: Message | string, senderId?: string) => void
   setMessages: (friendId: string, messages: Message[]) => void
@@ -34,6 +35,7 @@ interface ChatState {
   updatePresence: (friendId: string, status: string, lastSeen?: number) => void
   setOnlineFriends: (presenceMap: Record<string, { status: string; lastSeen?: number }>) => void
   updateAttachmentStatus: (friendId: string, attachmentId: string, status: string) => void
+  setTyping: (friendId: string, isTyping: boolean) => void
   clearStore: () => void
 }
 
@@ -42,6 +44,7 @@ export const useChatStore = create<ChatState>((set) => ({
   conversations: {},
   messages: {},
   onlineFriends: {},
+  typingFriends: {},
   friends: [],
 
   addMessage: (friendId, messageOrContent, senderId) =>
@@ -134,12 +137,21 @@ export const useChatStore = create<ChatState>((set) => ({
       }
     }),
 
+  setTyping: (friendId, isTyping) =>
+    set((state) => ({
+      typingFriends: {
+        ...state.typingFriends,
+        [friendId]: isTyping
+      }
+    })),
+
   clearStore: () =>
     set({
       activeFriendId: null,
       conversations: {},
       messages: {},
       onlineFriends: {},
+      typingFriends: {},
       friends: []
     })
 }))
