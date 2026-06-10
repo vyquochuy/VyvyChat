@@ -1,8 +1,11 @@
 # VivyChat - Serverless E2EE Realtime Messaging Platform
 
-VivyChat là một nền tảng nhắn tin thời gian thực 1-1 bảo mật, hoạt động trên kiến trúc Serverless (Edge Computing) của Cloudflare Workers kết hợp mã hóa đầu cuối (End-to-End Encryption - E2EE) mặc định ở phía Client.
+> [!NOTE]
+> **Dự án học tập cá nhân**: Đây là một dự án demo thử nghiệm được xây dựng cho mục đích học tập và nghiên cứu cá nhân về công nghệ Serverless (Cloudflare Workers, Durable Objects, D1) và mật mã học Web Crypto API ở trình duyệt. Dự án **không phải** là một ứng dụng thương mại hay sản phẩm thực tế sử dụng cho môi trường sản xuất (production).
 
-Dự án đảm bảo tính riêng tư tuyệt đối (Zero-Knowledge) nhờ việc tự thỏa thuận và mã hóa khóa trực tiếp trên trình duyệt của người dùng, cô lập hoàn toàn không gian lưu trữ khóa của các tài khoản khác nhau trên cùng một thiết bị.
+VivyChat là một ứng dụng nhắn tin thời gian thực 1-1 bảo mật, hoạt động trên kiến trúc Serverless (Edge Computing) của Cloudflare Workers kết hợp mã hóa đầu cuối (End-to-End Encryption - E2EE) mặc định ở phía Client.
+
+Dự án đảm bảo tính riêng tư (Zero-Knowledge) nhờ việc tự thỏa thuận và mã hóa khóa trực tiếp trên trình duyệt của người dùng, cô lập hoàn toàn không gian lưu trữ khóa của các tài khoản khác nhau trên cùng một thiết bị.
 
 ---
 
