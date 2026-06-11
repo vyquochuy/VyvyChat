@@ -3,8 +3,8 @@ import { useChatStore } from '../store/chatStore';
 import { useToast } from '../components/Toast';
 import { useSecretChatContext } from '../providers/SecretChatProvider';
 import { isE2EEPayload } from './useE2EE';
-
-const BACKEND_URL = 'http://localhost:8787';
+import { API_ENDPOINTS } from '../config/api';
+import { SOCKET_CONFIG } from '../config/constant';
 
 export function usePresenceSocket(token: string | null, currentPage: string) {
   const friends = useChatStore((state) => state.friends);
@@ -26,7 +26,7 @@ export function usePresenceSocket(token: string | null, currentPage: string) {
   const fetchPresenceStatus = async (idsString: string) => {
     if (!token || !idsString) return;
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users/presence?ids=${idsString}`, {
+      const response = await fetch(API_ENDPOINTS.USERS.PRESENCE(idsString), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -48,15 +48,14 @@ export function usePresenceSocket(token: string | null, currentPage: string) {
     }
 
     let retryCount = 0;
-    const baseDelay = 1000;
+    const baseDelay = SOCKET_CONFIG.RECONNECT_BASE_DELAY;
 
     const connectPresenceSocket = (tokenVal: string) => {
       if (presenceSocketRef.current) {
         presenceSocketRef.current.close();
       }
 
-      const wsUrl = BACKEND_URL.replace(/^http/, 'ws');
-      const ws = new WebSocket(`${wsUrl}/ws/presence?token=${encodeURIComponent(tokenVal)}`);
+      const ws = new WebSocket(API_ENDPOINTS.WS.PRESENCE(tokenVal));
       presenceSocketRef.current = ws;
 
       ws.onopen = () => {
@@ -68,7 +67,7 @@ export function usePresenceSocket(token: string | null, currentPage: string) {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'ping' }));
           }
-        }, 15000);
+        }, SOCKET_CONFIG.PING_INTERVAL);
       };
 
       ws.onmessage = async (e) => {
@@ -136,7 +135,7 @@ export function usePresenceSocket(token: string | null, currentPage: string) {
         if (presencePingIntervalRef.current) clearInterval(presencePingIntervalRef.current);
 
         if (currentPage === 'success') {
-          const delay = baseDelay * Math.pow(2, Math.min(retryCount, 5)) + Math.random() * 1000;
+          const delay = baseDelay * Math.pow(2, Math.min(retryCount, SOCKET_CONFIG.RECONNECT_MAX_EXPONENT)) + Math.random() * 1000;
           retryCount++;
           setTimeout(() => {
             if (currentPage === 'success' && token) {
@@ -166,7 +165,7 @@ export function usePresenceSocket(token: string | null, currentPage: string) {
         const ids = friendsRef.current.map((f: any) => f.id).join(',');
         fetchPresenceStatus(ids);
       }
-    }, 15000);
+    }, SOCKET_CONFIG.PRESENCE_POLLING_INTERVAL);
 
     return () => {
       clearInterval(interval);

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useChatStore } from '../store/chatStore';
 import { useToast } from '../components/Toast';
-
-const BACKEND_URL = 'http://localhost:8787';
+import { API_ENDPOINTS } from '../config/api';
 
 export function useNotifications(token: string | null, currentPage: string) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,7 +17,7 @@ export function useNotifications(token: string | null, currentPage: string) {
   const fetchPresenceStatus = async (idsString: string) => {
     if (!token || !idsString) return;
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users/presence?ids=${idsString}`, {
+      const response = await fetch(API_ENDPOINTS.USERS.PRESENCE(idsString), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -33,7 +32,7 @@ export function useNotifications(token: string | null, currentPage: string) {
   const fetchFriends = async () => {
     if (!token) return;
     try {
-      const response = await fetch(`${BACKEND_URL}/api/friends`, {
+      const response = await fetch(API_ENDPOINTS.FRIENDS.LIST, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -54,7 +53,7 @@ export function useNotifications(token: string | null, currentPage: string) {
   const fetchRequests = async () => {
     if (!token) return [];
     try {
-      const response = await fetch(`${BACKEND_URL}/api/friends/requests`, {
+      const response = await fetch(API_ENDPOINTS.FRIENDS.REQUESTS, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -71,7 +70,7 @@ export function useNotifications(token: string | null, currentPage: string) {
   const fetchNotifications = async () => {
     if (!token) return;
     try {
-      const response = await fetch(`${BACKEND_URL}/api/notifications`, {
+      const response = await fetch(API_ENDPOINTS.NOTIFICATIONS.LIST, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -115,7 +114,7 @@ export function useNotifications(token: string | null, currentPage: string) {
   const handleMarkRead = async (id: string) => {
     if (!token) return;
     try {
-      const response = await fetch(`${BACKEND_URL}/api/notifications/${id}/read`, {
+      const response = await fetch(API_ENDPOINTS.NOTIFICATIONS.MARK_READ(id), {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -130,7 +129,7 @@ export function useNotifications(token: string | null, currentPage: string) {
   const handleRespondRequest = async (friendshipId: string, action: 'ACCEPT' | 'DECLINE') => {
     if (!token) return;
     try {
-      const response = await fetch(`${BACKEND_URL}/api/friends/respond`, {
+      const response = await fetch(API_ENDPOINTS.FRIENDS.RESPOND, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,7 +155,7 @@ export function useNotifications(token: string | null, currentPage: string) {
   const handleSendFriendRequest = async (targetUserId: string) => {
     if (!token) return;
     try {
-      const response = await fetch(`${BACKEND_URL}/api/friends/request`, {
+      const response = await fetch(API_ENDPOINTS.FRIENDS.REQUEST, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -183,7 +182,7 @@ export function useNotifications(token: string | null, currentPage: string) {
     if (!searchQuery.trim() || !token) return;
     setIsLoadingData(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users/search?query=${encodeURIComponent(searchQuery.trim())}`, {
+      const response = await fetch(API_ENDPOINTS.USERS.SEARCH(searchQuery.trim()), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {

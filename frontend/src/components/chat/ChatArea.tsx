@@ -6,10 +6,9 @@ import { MessageInput } from './MessageInput'
 interface ChatAreaProps {
   onSendMessage?: (content: string, typeMsg?: 'TEXT' | 'IMAGE' | 'FILE', attachments?: any[]) => void
   token: string | null
-  backendUrl: string
 }
 
-export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage, token, backendUrl }) => {
+export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage, token }) => {
   const { activeFriendId, friends, messages, addMessage, setActiveFriendId, onlineFriends, typingFriends } = useChatStore()
 
   // Find selected friend details
@@ -92,7 +91,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage, token, backen
       <MessageList messages={friendMsgs} token={token} />
 
       {/* Input area */}
-      <MessageInput onSendMessage={handleSend} token={token} backendUrl={backendUrl} />
+      <MessageInput onSendMessage={handleSend} token={token} />
     </div>
   )
 }

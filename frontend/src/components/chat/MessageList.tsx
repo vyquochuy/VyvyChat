@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Message } from '../../store/chatStore'
+import { API_ENDPOINTS } from '../../config/api'
 
 interface MessageListProps {
   messages: Message[]
@@ -22,7 +23,7 @@ const AttachmentImage: React.FC<{ r2Key: string; token: string | null }> = ({ r2
     if (!token) return
     let isMounted = true
 
-    fetch(`http://localhost:8787/api/media/download-url?r2Key=${encodeURIComponent(r2Key)}`, {
+    fetch(API_ENDPOINTS.MEDIA.DOWNLOAD_URL(r2Key), {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => {
@@ -91,7 +92,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, token }) => 
       return
     }
     try {
-      const response = await fetch(`http://localhost:8787/api/media/download-url?r2Key=${encodeURIComponent(r2Key)}`, {
+      const response = await fetch(API_ENDPOINTS.MEDIA.DOWNLOAD_URL(r2Key), {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (!response.ok) {

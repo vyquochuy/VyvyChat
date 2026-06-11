@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useToast } from '../components/Toast';
+import { API_ENDPOINTS } from '../config/api';
 
 interface LoginProps {
   onSwitchToRegister: () => void;
   onSwitchToForgot: () => void;
   onSuccess: (data: { token: string; user: any }) => void;
-  backendUrl: string;
 }
 
-export const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onSwitchToForgot, onSuccess, backendUrl }) => {
+export const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onSwitchToForgot, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +48,7 @@ export const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onSwitchToForg
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${backendUrl}/api/auth/login`, {
+      const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

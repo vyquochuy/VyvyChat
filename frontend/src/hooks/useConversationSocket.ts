@@ -3,8 +3,8 @@ import { useChatStore } from '../store/chatStore';
 import { useToast } from '../components/Toast';
 import { useSecretChatContext } from '../providers/SecretChatProvider';
 import { isE2EEPayload } from './useE2EE';
-
-const BACKEND_URL = 'http://localhost:8787';
+import { API_ENDPOINTS } from '../config/api';
+import { SOCKET_CONFIG } from '../config/constant';
 
 export function useConversationSocket(
   token: string | null,
@@ -46,7 +46,7 @@ export function useConversationSocket(
   const fetchConversationMessages = async (convId: string, friendId: string) => {
     if (!token) return;
     try {
-      const response = await fetch(`${BACKEND_URL}/api/conversations/${convId}/messages`, {
+      const response = await fetch(API_ENDPOINTS.CONVERSATIONS.MESSAGES(convId), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -84,12 +84,11 @@ export function useConversationSocket(
       chatSocketRef.current.close();
     }
 
-    const wsUrl = BACKEND_URL.replace(/^http/, 'ws');
-    const ws = new WebSocket(`${wsUrl}/ws/conversation/${convId}?token=${encodeURIComponent(tokenVal)}`);
+    const ws = new WebSocket(API_ENDPOINTS.WS.CONVERSATION(convId, tokenVal));
     chatSocketRef.current = ws;
 
     let retryCount = 0;
-    const baseDelay = 1000;
+    const baseDelay = SOCKET_CONFIG.RECONNECT_BASE_DELAY;
 
     ws.onopen = () => {
       console.log(`[ChatWS] Connected to conversation ${convId}.`);
@@ -100,7 +99,7 @@ export function useConversationSocket(
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'ping' }));
         }
-      }, 15000);
+      }, SOCKET_CONFIG.PING_INTERVAL);
 
       const friendMsgs = useChatStore.getState().messages[friendId] || [];
       const realMsgs = friendMsgs.filter(m => !m.id.includes('mock'));
@@ -125,7 +124,7 @@ export function useConversationSocket(
           // Tự động tắt sau 4 giây nếu không có sự kiện mới
           if (data.isTyping) {
             clearTimeout(typingTimerRef.current);
-            typingTimerRef.current = setTimeout(() => setTyping(friendId, false), 4000);
+            typingTimerRef.current = setTimeout(() => setTyping(friendId, false), SOCKET_CONFIG.TYPING_TIMEOUT_MS);
           }
           return;
         }
@@ -191,7 +190,7 @@ export function useConversationSocket(
       if (chatPingIntervalRef.current) clearInterval(chatPingIntervalRef.current);
 
       if (activeFriendIdRef.current === friendId && currentPage === 'success') {
-        const delay = baseDelay * Math.pow(2, Math.min(retryCount, 5)) + Math.random() * 1000;
+        const delay = baseDelay * Math.pow(2, Math.min(retryCount, SOCKET_CONFIG.RECONNECT_MAX_EXPONENT)) + Math.random() * 1000;
         retryCount++;
         setTimeout(() => {
           if (activeFriendIdRef.current === friendId && currentPage === 'success' && token) {
@@ -218,7 +217,7 @@ export function useConversationSocket(
 
     const initChatRoom = async () => {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/conversations`, {
+        const response = await fetch(API_ENDPOINTS.CONVERSATIONS.CREATE, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

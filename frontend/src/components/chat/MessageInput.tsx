@@ -1,13 +1,14 @@
 import React, { useState, useRef } from 'react'
+import { API_ENDPOINTS } from '../../config/api'
+import { FILE_LIMITS, SOCKET_CONFIG } from '../../config/constant'
 import { useSocket } from '../../providers/SocketProvider'
 
 interface MessageInputProps {
   onSendMessage: (content: string, typeMsg?: 'TEXT' | 'IMAGE' | 'FILE', attachments?: any[]) => void
   token: string | null
-  backendUrl: string
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token, backendUrl }) => {
+export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token }) => {
   const [value, setValue] = useState('')
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [uploadFileName, setUploadFileName] = useState<string>('')
@@ -35,7 +36,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
     typingTimerRef.current = setTimeout(() => {
       sendTypingStatus(false)
-    }, 3000)
+    }, SOCKET_CONFIG.TYPING_DEBOUNCE_MS)
   }
 
   const handleAttachmentClick = () => {
@@ -58,7 +59,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
       file.name.endsWith('.rar') ||
       file.name.endsWith('.7z')
 
-    const maxLimit = isImage ? 10 * 1024 * 1024 : isZip ? 100 * 1024 * 1024 : 50 * 1024 * 1024
+    const maxLimit = isImage ? FILE_LIMITS.IMAGE : isZip ? FILE_LIMITS.ZIP : FILE_LIMITS.DEFAULT
     if (file.size > maxLimit) {
       const limitStr = isImage ? '10MB' : isZip ? '100MB' : '50MB'
       alert(`Kích thước tệp tin vượt quá giới hạn cho phép (${limitStr}).`)
@@ -76,7 +77,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
       const sha256 = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 
       // 3. Yêu cầu upload URL từ Hono API
-      const response = await fetch(`${backendUrl}/api/media/upload-url`, {
+      const response = await fetch(API_ENDPOINTS.MEDIA.UPLOAD_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

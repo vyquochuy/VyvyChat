@@ -10,8 +10,6 @@ import { useNotifications } from './hooks/useNotifications';
 import { SocketProvider, useSocket } from './providers/SocketProvider';
 import { SecretChatProvider } from './providers/SecretChatProvider';
 
-const BACKEND_URL = 'http://localhost:8787';
-
 const DashboardContent: React.FC<{
   user: any;
   token: string;
@@ -63,7 +61,6 @@ const DashboardContent: React.FC<{
         <ChatArea
           onSendMessage={handleSendMessage}
           token={token}
-          backendUrl={BACKEND_URL}
         />
       </div>
     </main>
@@ -130,7 +127,6 @@ const MainApp: React.FC = () => {
         {/* Auth routing */}
         {currentPage === 'login' && (
           <Login
-            backendUrl={BACKEND_URL}
             onSwitchToRegister={() => setCurrentPage('register')}
             onSwitchToForgot={() => setCurrentPage('forgot')}
             onSuccess={handleAuthSuccess}
@@ -139,7 +135,6 @@ const MainApp: React.FC = () => {
 
         {currentPage === 'register' && (
           <Register
-            backendUrl={BACKEND_URL}
             onSwitchToLogin={() => setCurrentPage('login')}
             onSuccess={handleAuthSuccess}
           />
@@ -147,7 +142,6 @@ const MainApp: React.FC = () => {
 
         {currentPage === 'forgot' && (
           <ForgotPassword
-            backendUrl={BACKEND_URL}
             onSwitchToLogin={() => setCurrentPage('login')}
           />
         )}

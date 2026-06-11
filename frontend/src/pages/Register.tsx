@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '../components/Toast';
+import { API_ENDPOINTS } from '../config/api';
 
 interface RegisterProps {
   onSwitchToLogin: () => void;
   onSuccess: (data: { token: string; user: any }) => void;
-  backendUrl: string;
 }
 
 type Step = 'form' | 'otp' | 'locked';
 
-export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onSuccess, backendUrl }) => {
+export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onSuccess }) => {
   // Form States
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -85,7 +85,7 @@ export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onSuccess, 
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${backendUrl}/api/auth/send-otp`, {
+      const response = await fetch(API_ENDPOINTS.AUTH.SEND_OTP, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onSuccess, 
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${backendUrl}/api/auth/register`, {
+      const response = await fetch(API_ENDPOINTS.AUTH.REGISTER, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onSuccess, 
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${backendUrl}/api/auth/send-otp`, {
+      const response = await fetch(API_ENDPOINTS.AUTH.SEND_OTP, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

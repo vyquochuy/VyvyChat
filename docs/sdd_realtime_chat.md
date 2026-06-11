@@ -612,9 +612,20 @@ Giao diện áp dụng Responsive Grid Layout:
 * Kiểm tra luồng Reset Encryption và xoay vòng khóa.
 * Đảm bảo máy chủ không thể đọc được nội dung tin nhắn trong bất kỳ trường hợp nào.
 
+### Phase 8: chỉnh sửa giao diện người dùng
+
+* **Mục Tiêu**: Nâng cao trải nghiệm người dùng bằng việc thêm ảnh đại diện và chế độ tối.
+* **Thời gian dự kiến**: Tuần 8.
+* **Deliverables**:
+  * Thêm ảnh đại diện cho người dùng(mặc định hoặc chọn từ máy người dùng).
+  * chức năng xem, đổi ảnh đại diện
+  * ảnh đại diện của bạn bè hiển thị trên danh sách.
+  * chức năng chuyển đổi giao diện(sáng, tối)
+
+### Phase 9: dashboard 
 
 
-### Phase 7: Hoàn thiện, Tối ưu & Đóng gói (Refinement & Deployment)
+### Phase Cuối: Hoàn thiện, Tối ưu & Đóng gói (Refinement & Deployment)
 
 * **Mục tiêu**: Hoàn thiện các tính năng phụ trợ của tin nhắn, tối ưu hóa code và đưa ứng dụng lên môi trường thực tế.
 * **Thời gian dự kiến**: Tuần 7.
@@ -622,7 +633,7 @@ Giao diện áp dụng Responsive Grid Layout:
 * API và logic xử lý thu hồi (recall) và chỉnh sửa (edit) tin nhắn, đảm bảo đồng bộ trạng thái lập tức tới mọi Client đang trong phòng.
 * Tối ưu hóa kích thước file tĩnh (Vite build optimization) và cấu hình bảo mật WSS.
 * Triển khai thực tế toàn bộ Frontend lên Cloudflare Pages và Backend API/WebSockets lên Cloudflare Workers.
-
+* kiểm tra các chức năng bảo mật giống với 1 dự án thực tế
 ---
 
 ## 10. Phân tích các thách thức kỹ thuật trên Cloudflare

@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '../components/Toast';
+import { API_ENDPOINTS } from '../config/api';
 
 interface ForgotPasswordProps {
   onSwitchToLogin: () => void;
-  backendUrl: string;
 }
 
 type Step = 'email' | 'otp' | 'locked';
 
-export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSwitchToLogin, backendUrl }) => {
+export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSwitchToLogin }) => {
   // Form States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -78,7 +78,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSwitchToLogin,
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${backendUrl}/api/auth/send-otp-reset`, {
+      const response = await fetch(API_ENDPOINTS.AUTH.SEND_OTP_RESET, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSwitchToLogin,
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${backendUrl}/api/auth/reset-password`, {
+      const response = await fetch(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -163,7 +163,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSwitchToLogin,
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${backendUrl}/api/auth/send-otp-reset`, {
+      const response = await fetch(API_ENDPOINTS.AUTH.SEND_OTP_RESET, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
