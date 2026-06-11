@@ -63,13 +63,13 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage, token }) => {
           <h3 className="text-[15px] font-bold text-white m-0">
             {activeFriend.displayName}
           </h3>
-          {/* Typing Indicator – hiuển thị khi bạn bè đang gõ phím */}
+          {/* Typing Indicator – hiển thị khi bạn bè đang gõ phím */}
           {typingFriends[activeFriendId] ? (
             <span className="text-[11px] text-[var(--color-cyan)] flex items-center gap-1.5 mt-0.5">
               <span className="flex gap-[3px] items-center">
-                <span className="w-1 h-1 bg-[var(--color-cyan)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-1 h-1 bg-[var(--color-cyan)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-1 h-1 bg-[var(--color-cyan)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <span className="w-1 h-1 bg-[var(--color-cyan)] rounded-full animate-bounce" />
+                <span className="w-1 h-1 bg-[var(--color-cyan)] rounded-full animate-bounce animation-delay-150" />
+                <span className="w-1 h-1 bg-[var(--color-cyan)] rounded-full animate-bounce animation-delay-300" />
               </span>
               Đang nhập...
             </span>
