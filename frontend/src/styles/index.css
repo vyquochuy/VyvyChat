@@ -6,103 +6,121 @@
    DESIGN SYSTEM TOKENS & RESET
    ========================================================================== */
 :root {
-  /* --- LIGHT THEME (DEFAULT) --- */
-  --bg-primary: #f8fafc;
-  --bg-card: #ffffff;
-  --bg-card-border: #e2e8f0;
-  --bg-input: #ffffff;
-  --bg-input-focus: #ffffff;
+  /* --- LIGHT THEME (LIGHT CYAN) --- */
+  --bg-primary: #F3F8FF;
+  --bg-sidebar-custom: #EBF2FF;
+  --bg-card: #FFFFFF;
+  --bg-card-border: #DCE6FF;
+  --bg-input: #FFFFFF;
+  --bg-input-focus: #FFFFFF;
 
-  --text-primary: #0f172a;
+  --text-primary: #0F172A;
   --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --color-counter-text: #ffffff;
+  --text-muted: #94A3B8;
+  --color-counter-text: #FFFFFF;
 
   /* Brand Accent Colors */
-  --color-purple: #6366f1;
-  --color-purple-glow: rgba(99, 102, 241, 0.12);
-  --color-cyan: #4f46e5;
-  --color-cyan-glow: rgba(79, 70, 229, 0.12);
-  --color-success: #10b981;
-  --color-success-neon: #10b981;
+  --color-purple: #5380F1;
+  --color-purple-glow: rgba(83, 128, 241, 0.12);
+  --color-cyan: #5380F1;
+  --color-cyan-glow: rgba(83, 128, 241, 0.12);
+  --color-success: #10B981;
+  --color-success-neon: #10B981;
   --color-success-glow: rgba(16, 185, 129, 0.15);
-  --color-error: #ef4444;
+  --color-error: #EF4444;
   --color-error-glow: rgba(239, 68, 68, 0.15);
 
-  --bg-sidebar-custom: #eef2f7;
-  --bg-chat-custom: #fafbff;
-  --bg-message-incoming: #f1f5f9;
-  --text-message-incoming: #0f172a;
-  --bg-message-outgoing: #4f46e5;
-  --text-message-outgoing: #ffffff;
-  --border-message-incoming: transparent;
-  --shadow-message-incoming: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-message-outgoing: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --bg-chat-custom: #F3F8FF;
+  --bg-message-incoming: #FFFFFF;
+  --text-message-incoming: #0F172A;
+  --bg-message-outgoing: #5380F1;
+  --text-message-outgoing: #FFFFFF;
+  --border-message-incoming: #DCE6FF;
+  --shadow-message-incoming: 0 1px 2px rgba(83, 128, 241, 0.05);
+  --shadow-message-outgoing: 0 1px 2px rgba(83, 128, 241, 0.1);
 
-  --bg-active-chat: #ffffff;
-  --border-active-chat: #e2e8f0;
-  --shadow-active-chat: 0 2px 8px rgba(0, 0, 0, 0.05);
-  --text-active-chat-name: #0f172a;
-  --hover-chat-item: rgba(99, 102, 241, 0.06);
+  --bg-active-chat: #FFFFFF;
+  --border-active-chat: #DCE6FF;
+  --shadow-active-chat: 0 2px 8px rgba(83, 128, 241, 0.08);
+  --text-active-chat-name: #0F172A;
+  --hover-chat-item: rgba(83, 128, 241, 0.06);
   --bg-inactive-chat: transparent;
   --border-inactive-chat: transparent;
-  --bg-header-glass: rgba(255, 255, 255, 0.8);
+  --bg-header-glass: rgba(243, 248, 255, 0.85);
 
   /* Dimensions & Typography */
-  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: 'Inter', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --radius-card: 24px;
-  --radius-button: 14px;
+  --radius-card: 20px;
+  --radius-button: 16px;
   --radius-input: 12px;
 
   /* Transitions */
-  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Scrollbar custom variables */
+  --scrollbar-thumb: rgba(83, 128, 241, 0.25);
+  --scrollbar-thumb-hover: rgba(83, 128, 241, 0.4);
+
+  /* Toast variables */
+  --bg-toast: rgba(255, 255, 255, 0.95);
+  --text-toast: var(--text-primary);
+  --shadow-toast: 0 10px 30px rgba(83, 128, 241, 0.15);
 }
 
 [data-theme="dark"] {
-  /* --- DARK THEME --- */
-  --bg-primary: #070813;
-  --bg-card: rgba(15, 17, 34, 0.65);
-  --bg-card-border: rgba(255, 255, 255, 0.08);
-  --bg-input: rgba(255, 255, 255, 0.04);
-  --bg-input-focus: rgba(255, 255, 255, 0.08);
+  /* --- DARK THEME (MILLENNIUM BLUE) --- */
+  --bg-primary: #0A1128;
+  --bg-sidebar-custom: #0F1A3A;
+  --bg-card: #111E4A;
+  --bg-card-border: #1E2A5D;
+  --bg-input: #111E4A;
+  --bg-input-focus: #15255C;
 
-  --text-primary: #ffffff;
-  --text-secondary: #9aa1b1;
-  --text-muted: #5e6575;
-  --color-counter-text: #070813;
+  --text-primary: #EAF2FF;
+  --text-secondary: #B7C5E0;
+  --text-muted: #7E8BAF;
+  --color-counter-text: #0A1128;
 
   /* Brand Accent Colors */
-  --color-purple: #8a2be2;
-  --color-purple-glow: rgba(138, 43, 226, 0.4);
-  --color-cyan: #00f5ff;
-  --color-cyan-glow: rgba(0, 245, 255, 0.3);
-  --color-success: #10b981;
-  --color-success-neon: #39ff14;
-  --color-success-glow: rgba(57, 255, 20, 0.25);
-  --color-error: #ff3366;
-  --color-error-glow: rgba(255, 51, 102, 0.25);
+  --color-purple: #7C5CFF;
+  --color-purple-glow: rgba(124, 92, 255, 0.15);
+  --color-cyan: #7C5CFF;
+  --color-cyan-glow: rgba(124, 92, 255, 0.15);
+  --color-success: #34D399;
+  --color-success-neon: #34D399;
+  --color-success-glow: rgba(52, 211, 153, 0.15);
+  --color-error: #FB7185;
+  --color-error-glow: rgba(251, 113, 133, 0.15);
 
-  --bg-sidebar-custom: #0b0d19;
-  --bg-chat-custom: #070814;
-  --bg-message-incoming: rgba(255, 255, 255, 0.05);
-  --text-message-incoming: #ffffff;
-  --bg-message-outgoing: linear-gradient(135deg, var(--color-purple) 0%, #6366f1 100%);
-  --text-message-outgoing: #ffffff;
-  --border-message-incoming: rgba(255, 255, 255, 0.1);
+  --bg-chat-custom: #0A1128;
+  --bg-message-incoming: #111E4A;
+  --text-message-incoming: #EAF2FF;
+  --bg-message-outgoing: linear-gradient(135deg, #7C5CFF 0%, #6B49FF 100%);
+  --text-message-outgoing: #FFFFFF;
+  --border-message-incoming: #1E2A5D;
   --shadow-message-incoming: none;
   --shadow-message-outgoing: none;
 
-  --bg-active-chat: rgba(138, 43, 226, 0.12);
-  --border-active-chat: rgba(138, 43, 226, 0.25);
+  --bg-active-chat: rgba(124, 92, 255, 0.12);
+  --border-active-chat: rgba(124, 92, 255, 0.25);
   --shadow-active-chat: none;
-  --text-active-chat-name: #00f5ff;
+  --text-active-chat-name: #7C5CFF;
   --hover-chat-item: rgba(255, 255, 255, 0.04);
   --bg-inactive-chat: rgba(255, 255, 255, 0.01);
-  --border-inactive-chat: rgba(255, 255, 255, 0.04);
-  --bg-header-glass: rgba(15, 17, 34, 0.75);
+  --border-inactive-chat: rgba(255, 255, 255, 0.02);
+  --bg-header-glass: rgba(10, 17, 40, 0.85);
+
+  /* Scrollbar custom variables */
+  --scrollbar-thumb: rgba(124, 92, 255, 0.25);
+  --scrollbar-thumb-hover: rgba(124, 92, 255, 0.4);
+
+  /* Toast variables */
+  --bg-toast: rgba(18, 20, 38, 0.85);
+  --text-toast: var(--text-primary);
+  --shadow-toast: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 body {
@@ -820,27 +838,35 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  z-index: 100;
+  z-index: 9999;
   max-width: 360px;
   width: calc(100% - 48px);
 }
 
 .toast {
-  background: rgba(18, 20, 38, 0.85);
-  border: 1px solid var(--bg-card-border);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(83, 128, 241, 0.15);
   border-left: 4px solid var(--color-purple);
   border-radius: 12px;
-  padding: 16px 20px;
-  color: var(--text-primary);
+  padding: 14px 18px;
+  color: #0F172A;
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px rgba(83, 128, 241, 0.12);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
   transform: translateX(120%);
   animation: slideToastIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-theme="dark"] .toast {
+  background: rgba(17, 30, 74, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 4px solid var(--color-purple);
+  color: #EAF2FF;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
 .toast.toast-error {
@@ -889,6 +915,10 @@ body {
 
 .toast-close:hover {
   color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .toast-close:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
@@ -976,8 +1006,8 @@ body {
 @media (min-width: 768px) {
   .chat-header-glass {
     background-color: var(--bg-header-glass);
-    backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
   }
 }
 
@@ -991,4 +1021,21 @@ body {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.chat-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }

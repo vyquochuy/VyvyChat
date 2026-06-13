@@ -5,6 +5,7 @@ import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { Sidebar } from './components/chat/Sidebar';
 import { ChatArea } from './components/chat/ChatArea';
+import { InfoPanel } from './components/chat/InfoPanel';
 import { useChatStore } from './store/chatStore';
 import { useNotifications } from './hooks/useNotifications';
 import { SocketProvider, useSocket } from './providers/SocketProvider';
@@ -19,8 +20,14 @@ const DashboardContent: React.FC<{
   setTheme: (t: 'light' | 'dark') => void;
 }> = ({ user, token, onLogout, currentPage, theme, setTheme }) => {
   const activeFriendId = useChatStore((state) => state.activeFriendId);
+  const friends = useChatStore((state) => state.friends);
+  const messages = useChatStore((state) => state.messages);
   const { handleSendMessage } = useSocket();
   const [activeTab, setActiveTab] = useState<'chats' | 'contacts' | 'search' | 'requests' | 'notifications' | 'security'>('chats');
+  const [showInfoPanel, setShowInfoPanel] = useState(true);
+
+  const activeFriend = friends.find((f) => f.id === activeFriendId);
+  const friendMsgs = activeFriendId ? messages[activeFriendId] : [];
 
   const {
     searchQuery,
@@ -28,7 +35,6 @@ const DashboardContent: React.FC<{
     searchResults,
     pendingRequests,
     notifications,
-    isLoadingData,
     handleMarkRead,
     handleRespondRequest,
     handleSendFriendRequest,
@@ -36,7 +42,7 @@ const DashboardContent: React.FC<{
   } = useNotifications(token, currentPage);
 
   return (
-    <main className="verification-card !p-0 flex h-full md:h-[85vh] md:min-h-[550px] md:max-h-[850px] w-full md:rounded-[24px] rounded-none border-none md:border-solid overflow-hidden">
+    <main className="verification-card !p-0 flex h-full md:h-[85vh] md:min-h-[550px] md:max-h-[850px] w-full md:rounded-[24px] rounded-none border-none md:border-solid overflow-hidden bg-[var(--bg-primary)]">
       {/* Left Column (Sidebar) */}
       <div className={`${activeFriendId ? 'hidden md:block' : 'block'} w-full md:w-80 h-full flex-shrink-0`}>
         <Sidebar
@@ -54,19 +60,34 @@ const DashboardContent: React.FC<{
             searchResults={searchResults}
             onSearchSubmit={handleSearchSubmit}
             onSendFriendRequest={handleSendFriendRequest}
-            isLoadingData={isLoadingData}
             theme={theme}
             setTheme={setTheme}
           />
       </div>
 
-      {/* Right Column (Chat Area) */}
+      {/* Center Column (Chat Area) */}
       <div className={`${activeFriendId ? 'block' : 'hidden md:block'} flex-1 h-full`}>
         <ChatArea
           onSendMessage={handleSendMessage}
           token={token}
+          onToggleInfoPanel={() => setShowInfoPanel(!showInfoPanel)}
+          showInfoPanel={showInfoPanel}
         />
       </div>
+
+      {/* Right Column (Info Panel) */}
+      {activeFriendId && activeFriend && showInfoPanel && (
+        <div className="hidden lg:block w-72 h-full flex-shrink-0">
+          <InfoPanel
+            friend={activeFriend}
+            messages={friendMsgs}
+            onClose={() => setShowInfoPanel(false)}
+            token={token}
+            theme={theme}
+            setTheme={setTheme}
+          />
+        </div>
+      )}
     </main>
   );
 };

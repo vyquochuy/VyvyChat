@@ -173,7 +173,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, token }) => 
   // 1. Loading Skeleton Shimmer
   if (messages === undefined) {
     return (
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6 animate-pulse select-none bg-chat-custom">
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6 animate-pulse select-none bg-chat-custom chat-scroll">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="flex items-start gap-3 w-full">
             <div className="w-9 h-9 rounded-full bg-slate-200/50 dark:bg-white/10 flex-shrink-0" />
@@ -232,7 +232,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, token }) => 
   return (
     <div
       ref={containerRef}
-      className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-chat-custom"
+      className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-chat-custom chat-scroll"
     >
       {groups.map((group, groupIdx) => {
         const firstMsg = group.messages[0]
@@ -247,9 +247,9 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, token }) => 
           return (
             <React.Fragment key={firstMsg.id}>
               {showDateSeparator && (
-                <div className="flex items-center justify-center my-4 select-none">
+                <div className="flex items-center justify-center my-5 select-none">
                   <div className="h-[1px] bg-[var(--bg-card-border)] flex-1" />
-                  <span className="mx-4 text-xs font-semibold text-[var(--text-muted)] tracking-wider">
+                  <span className="mx-4 text-[11px] font-medium text-[var(--text-muted)] px-2.5 py-0.5 rounded-full bg-[var(--bg-input)] border border-[var(--bg-card-border)] shadow-sm">
                     {getFriendlyDateString(firstMsg.timestamp)}
                   </span>
                   <div className="h-[1px] bg-[var(--bg-card-border)] flex-1" />
@@ -267,9 +267,9 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, token }) => 
         return (
           <React.Fragment key={firstMsg.id}>
             {showDateSeparator && (
-              <div className="flex items-center justify-center my-4 select-none">
+              <div className="flex items-center justify-center my-5 select-none">
                 <div className="h-[1px] bg-[var(--bg-card-border)] flex-1" />
-                <span className="mx-4 text-xs font-semibold text-[var(--text-muted)] tracking-wider">
+                <span className="mx-4 text-[11px] font-medium text-[var(--text-muted)] px-2.5 py-0.5 rounded-full bg-[var(--bg-input)] border border-[var(--bg-card-border)] shadow-sm">
                   {getFriendlyDateString(firstMsg.timestamp)}
                 </span>
                 <div className="h-[1px] bg-[var(--bg-card-border)] flex-1" />
@@ -329,7 +329,21 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, token }) => 
                                   : 'bg-[var(--bg-message-incoming)] text-[var(--text-message-incoming)] border border-[var(--border-message-incoming)]'
                               } ${isRecent ? 'animate-[popIn_150ms_ease-out_forwards]' : ''}`}
                             >
-                              {msg.content}
+                              <div className="flex flex-col gap-0.5">
+                                <div className="break-words">{msg.content}</div>
+                                <div className={`text-[9px] text-right mt-1 opacity-75 select-none flex items-center justify-end gap-1 ${
+                                  isMe ? 'text-[var(--text-message-outgoing)]' : 'text-[var(--text-secondary)]'
+                                }`}>
+                                  <span>
+                                    {new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                  {isMe && (
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="inline-block opacity-85">
+                                      <path d="M17 6L8.5 14.5L5 11M22 6L13.5 14.5" />
+                                    </svg>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           )}
 
@@ -432,13 +446,8 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, token }) => 
                     })}
                   </div>
 
-                  {/* Group Timestamp (rendered below the last bubble of the group) */}
-                  <span className={`text-[10px] text-[var(--text-muted)] mt-1 select-none ${isMe ? 'mr-1' : 'ml-1'}`}>
-                    {new Date(group.messages[group.messages.length - 1].timestamp).toLocaleTimeString('vi-VN', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </span>
+                  {/* Spacing below bubble group */}
+                  <div className="h-1" />
 
                 </div>
               </div>

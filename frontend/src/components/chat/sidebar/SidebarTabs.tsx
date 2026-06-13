@@ -16,16 +16,13 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
   unreadNotifsCount
 }) => {
   const tabs = [
-    { id: 'chats', label: 'Chat' },
-    { id: 'contacts', label: 'Bạn bè' },
-    { id: 'search', label: 'Tìm' },
+    { id: 'chats', label: 'Bạn bè' },
     { id: 'requests', label: 'Lời mời', count: pendingRequestsCount },
-    { id: 'notifications', label: 'Báo', count: unreadNotifsCount },
-    { id: 'security', label: '🔒' }
+    { id: 'notifications', label: 'Thông báo', count: unreadNotifsCount }
   ]
 
   return (
-    <div className="flex border-b border-[var(--bg-card-border)] bg-transparent py-0.5 px-1 overflow-x-auto whitespace-nowrap">
+    <div className="flex w-full border-b border-[var(--bg-card-border)] bg-transparent py-0.5 px-1 flex-shrink-0 select-none">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id
         return (
@@ -35,11 +32,15 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
               setActiveTab(tab.id as any)
               setFilterQuery('')
             }}
-            className={`flex-1 py-2.5 px-1.5 border-none bg-transparent ${isActive ? 'text-[var(--color-cyan)] border-b-2 border-b-[var(--color-cyan)]' : 'text-[var(--text-secondary)] border-b-2 border-b-transparent'} text-xs font-semibold cursor-pointer relative`}
+            className={`flex-1 flex items-center justify-center gap-1 py-2 px-0.5 border-none bg-transparent ${
+              isActive 
+                ? 'text-[var(--color-purple)] font-bold border-b-2 border-[var(--color-purple)]' 
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-b-2 border-transparent'
+            } text-[12.5px] font-medium cursor-pointer transition-all duration-150`}
           >
-            {tab.label}
+            <span className="truncate">{tab.label}</span>
             {tab.count !== undefined && tab.count > 0 && (
-              <span className={`absolute top-[1px] right-[1px] ${tab.id === 'notifications' ? 'bg-[var(--color-cyan)]' : 'bg-[var(--color-error)]'} text-[var(--color-counter-text)] text-[8px] font-bold rounded-full w-[13px] h-[13px] flex items-center justify-center`}>
+              <span className="bg-[var(--color-purple)] text-white text-[9px] font-bold rounded-full px-1.5 py-0.5 min-w-[15px] h-3.5 flex items-center justify-center flex-shrink-0">
                 {tab.count}
               </span>
             )}

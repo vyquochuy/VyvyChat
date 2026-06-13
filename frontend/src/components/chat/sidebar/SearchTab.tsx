@@ -2,52 +2,21 @@ import React from 'react'
 
 interface SearchTabProps {
   searchQuery: string
-  setSearchQuery: (query: string) => void
   searchResults: any[]
-  onSearchSubmit: (e: React.FormEvent) => void
   onSendFriendRequest: (targetUserId: string) => void
   pendingRequests: any[]
   onRespondRequest: (friendshipId: string, action: 'ACCEPT' | 'DECLINE') => void
-  isLoadingData: boolean;
 }
 
 export const SearchTab: React.FC<SearchTabProps> = ({
   searchQuery,
-  setSearchQuery,
   searchResults,
-  onSearchSubmit,
   onSendFriendRequest,
   pendingRequests,
-  onRespondRequest,
-  isLoadingData
+  onRespondRequest
 }) => {
   return (
     <div>
-      <form onSubmit={onSearchSubmit} className="flex gap-1.5 mb-3">
-        <input
-          type="text"
-          placeholder="Tìm UID, Email, Tên..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 bg-[var(--bg-input)] 
-          border border-[var(--bg-card-border)] 
-          rounded-xl px-3 py-2 
-          text-[var(--text-primary)] text-[13px] 
-          outline-none text-left 
-          focus:border-[var(--color-purple)] 
-          focus:shadow-[0_0_0_3px_var(--color-purple-glow)] 
-          transition-all"
-        />
-        <button
-          type="submit"
-          disabled={isLoadingData}
-          className="bg-[var(--color-purple)] border-none text-white px-3.5 py-2 
-          rounded-xl text-xs font-bold cursor-pointer 
-          disabled:opacity-50 transition-all hover:bg-[var(--color-cyan)] duration-150 active:scale-95"
-        >
-          {isLoadingData ? '...' : 'Tìm'}
-        </button>
-      </form>
 
       <div className="flex flex-col gap-1.5">
         {searchResults.length === 0 ? (

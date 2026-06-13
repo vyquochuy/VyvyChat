@@ -194,8 +194,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
       {uploadProgress !== null && (
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-[var(--bg-card-border)] overflow-hidden">
           <div
+            ref={(el) => { if (el) { el.style.width = `${uploadProgress}%` } }}
             className="h-full bg-[var(--color-purple)] transition-all duration-150"
-            style={{ width: `${uploadProgress}%` }}
           />
           <div className="absolute top-[3px] left-4 text-[10px] text-[var(--text-secondary)] bg-[var(--bg-card)] border border-[var(--bg-card-border)] px-2.5 py-0.5 rounded-b-md shadow-sm">
             Đang tải lên: {uploadFileName} ({uploadProgress}%)
@@ -225,13 +225,27 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
         onChange={handleTextAreaChange}
         onKeyDown={handleKeyDown}
         disabled={uploadProgress !== null}
-        className="flex-1 bg-[var(--bg-input)] min-w-0 max-h-[120px] resize-none overflow-y-auto
+        className="flex-1 bg-[var(--bg-input)] min-w-0 h-auto max-h-[120px] resize-none overflow-y-auto chat-scroll
         border border-[var(--bg-card-border)] rounded-[20px] px-[18px] py-[10px] text-[var(--text-primary)] text-sm outline-none text-left 
         focus:border-[var(--color-purple)] 
         focus:shadow-[0_0_0_3px_var(--color-purple-glow)] 
         transition-all duration-200 disabled:opacity-50"
-        style={{ height: 'auto' }}
       />
+
+      {/* Smiley Emoji Button */}
+      <button
+        type="button"
+        title="Emoji"
+        className="bg-none border-none text-[var(--text-muted)] hover:text-[var(--color-purple)] cursor-pointer p-1.5 flex items-center justify-center rounded-full transition-all duration-200 disabled:opacity-40 mb-[3.5px]"
+        disabled={uploadProgress !== null}
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+          <line x1="9" y1="9" x2="9.01" y2="9" />
+          <line x1="15" y1="9" x2="15.01" y2="9" />
+        </svg>
+      </button>
 
       {/* Redesigned Circular Send Button */}
       <button
