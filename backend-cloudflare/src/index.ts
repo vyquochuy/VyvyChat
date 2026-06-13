@@ -19,6 +19,12 @@ export { UserPresenceDO } from './durable-objects/UserPresenceDO'
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>()
 
+// Global Error Handler to always return JSON errors
+app.onError((err, c) => {
+  console.error('[Global Error]', err);
+  return c.json({ error: err.message || 'Lỗi hệ thống ngoài ý muốn.' }, 500);
+});
+
 // 1. Kích hoạt CORS cho tất cả các origins (BẮT BUỘC ĐẶT TRƯỚC MOUNT ROUTES)
 app.use('*', cors({
   origin: '*',
