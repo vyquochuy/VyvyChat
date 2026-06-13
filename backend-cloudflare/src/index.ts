@@ -33,7 +33,7 @@ app.use('*', cors({
 }))
 
 // 2. Middleware chống DDoS rate limit (BẮT BUỘC ĐẶT TRƯỚC MOUNT ROUTES)
-app.use('/api/*', rateLimitMiddleware)
+app.use('/api/auth/*', rateLimitMiddleware)
 
 // 3. Mount route modules
 app.route('/api/auth', authRoutes)

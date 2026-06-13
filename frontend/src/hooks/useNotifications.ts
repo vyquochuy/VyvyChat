@@ -90,25 +90,53 @@ export function useNotifications(token: string | null, currentPage: string) {
 
   // Synchronize notifications and requests periodically
   useEffect(() => {
-    if (currentPage === 'success' && token) {
-      loadDashboardData();
+    if (currentPage !== 'success' || !token) return;
 
-      const interval = setInterval(() => {
+    let intervalId: any = null;
+    let friendsIntervalId: any = null;
+
+    const startPolling = () => {
+      fetchRequests();
+      fetchNotifications();
+      fetchFriends();
+
+      intervalId = setInterval(() => {
         fetchRequests();
         fetchNotifications();
-      }, 8000);
+      }, 30000); // 30s for notifications/requests
 
-      // Refresh friends list mỗi 30 giây để cập nhật publicKey mới nhất
-      // (quan trọng cho E2EE: khi bạn bè xoay khóa, cần publicKey mới để encrypt đúng)
-      const friendsInterval = setInterval(() => {
+      friendsIntervalId = setInterval(() => {
         fetchFriends();
-      }, 30000);
+      }, 60000); // 60s for friends public keys refresh
+    };
 
-      return () => {
-        clearInterval(interval);
-        clearInterval(friendsInterval);
-      };
+    const stopPolling = () => {
+      if (intervalId) clearInterval(intervalId);
+      if (friendsIntervalId) clearInterval(friendsIntervalId);
+    };
+
+    // Initial load
+    loadDashboardData();
+
+    // Start polling if tab is active initially
+    if (!document.hidden) {
+      startPolling();
     }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        startPolling();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [currentPage, token]);
 
   const handleMarkRead = async (id: string) => {

@@ -158,24 +158,46 @@ export function usePresenceSocket(token: string | null, userId: string | undefin
       };
     };
 
-    connectPresenceSocket(token);
+    let presenceIntervalId: any = null;
 
-    // Initial presence check
-    if (friends.length > 0) {
-      const ids = friends.map((f: any) => f.id).join(',');
-      fetchPresenceStatus(ids);
-    }
-
-    // Polling presence status every 15s
-    const interval = setInterval(() => {
+    const startPresencePolling = () => {
       if (friendsRef.current.length > 0) {
         const ids = friendsRef.current.map((f: any) => f.id).join(',');
         fetchPresenceStatus(ids);
       }
-    }, SOCKET_CONFIG.PRESENCE_POLLING_INTERVAL);
+
+      presenceIntervalId = setInterval(() => {
+        if (friendsRef.current.length > 0) {
+          const ids = friendsRef.current.map((f: any) => f.id).join(',');
+          fetchPresenceStatus(ids);
+        }
+      }, 45000); // Polling presence status every 45s
+    };
+
+    const stopPresencePolling = () => {
+      if (presenceIntervalId) clearInterval(presenceIntervalId);
+    };
+
+    connectPresenceSocket(token);
+
+    // Initial presence check
+    if (!document.hidden) {
+      startPresencePolling();
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPresencePolling();
+      } else {
+        startPresencePolling();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      clearInterval(interval);
+      stopPresencePolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (presencePingIntervalRef.current) clearInterval(presencePingIntervalRef.current);
       if (presenceSocketRef.current) {
         presenceSocketRef.current.close();
