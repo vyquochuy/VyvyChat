@@ -11,6 +11,7 @@
     "dev:backend": "npm run dev --prefix backend-cloudflare",
     "dev:frontend": "npm run dev --prefix frontend",
     "build:backend": "npm run build --prefix backend-cloudflare",
-    "build:frontend": "npm run build --prefix frontend"
+    "build:frontend": "npm run build --prefix frontend",
+    "build": "npm run build:frontend"
   }
 }
