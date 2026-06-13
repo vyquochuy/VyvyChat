@@ -5,7 +5,7 @@ export interface Attachment {
   file_name: string
   file_size: number
   mime_type: string
-  r2_key: string
+  storage_key: string
   sha256?: string
   thumbnail_key?: string
   scan_status: 'PENDING' | 'CLEAN' | 'INFECTED'

@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS attachments (
   file_name TEXT NOT NULL,
   file_size INTEGER NOT NULL,
   mime_type TEXT NOT NULL,
-  r2_key TEXT NOT NULL,
+  storage_key TEXT NOT NULL,
   sha256 TEXT,
   thumbnail_key TEXT,
   download_count INTEGER DEFAULT 0,
@@ -17,5 +17,5 @@ CREATE TABLE IF NOT EXISTS attachments (
 );
 
 CREATE INDEX IF NOT EXISTS idx_attachments_message ON attachments(message_id);
-CREATE INDEX IF NOT EXISTS idx_attachments_r2_key ON attachments(r2_key);
+CREATE INDEX IF NOT EXISTS idx_attachments_storage_key ON attachments(storage_key);
 CREATE INDEX IF NOT EXISTS idx_attachments_sha256 ON attachments(sha256);

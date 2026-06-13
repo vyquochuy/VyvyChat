@@ -6,7 +6,7 @@ export type Env = {
   CONVERSATION_DO: DurableObjectNamespace
   USER_PRESENCE_DO: DurableObjectNamespace
   ENVIRONMENT?: string
-  MEDIA_BUCKET: R2Bucket
+  MEDIA_KV: KVNamespace
   VIRUS_SCAN_QUEUE: Queue<any>
 }
 

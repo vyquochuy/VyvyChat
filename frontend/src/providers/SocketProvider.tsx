@@ -16,7 +16,7 @@ export const SocketProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ token, user, currentPage, children }) => {
   // Activate presence socket hook
-  usePresenceSocket(token, currentPage);
+  usePresenceSocket(token, user?.id, currentPage);
 
   // Activate conversation socket hook and get sendMessage + typing callbacks
   const { handleSendMessage, sendTypingStatus } = useConversationSocket(token, user, currentPage);

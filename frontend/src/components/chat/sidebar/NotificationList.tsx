@@ -23,10 +23,10 @@ export const NotificationList: React.FC<NotificationListProps> = ({
         <div
           key={n.id}
           onClick={() => !n.is_read && onMarkRead(n.id)}
-          className={`${n.is_read ? 'bg-white/[0.02] border-white/[0.05] cursor-default' : 'bg-[rgba(138,43,226,0.05)] border-[rgba(138,43,226,0.2)] cursor-pointer'} border px-3 py-2.5 rounded-xl flex justify-between items-start text-left`}
+          className={`${n.is_read ? 'bg-[var(--bg-card)] border-[var(--bg-card-border)] cursor-default' : 'bg-[var(--color-purple-glow)] border-[var(--color-purple)]/[0.2] cursor-pointer'} border px-3 py-2.5 rounded-xl flex justify-between items-start text-left shadow-sm`}
         >
           <div className="flex-1">
-            <h5 className={`text-[12.5px] font-bold ${n.is_read ? 'text-[var(--text-secondary)]' : 'text-white'} m-0`}>
+            <h5 className={`text-[12.5px] font-bold ${n.is_read ? 'text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'} m-0`}>
               {n.title}
             </h5>
             <p className="text-[11.5px] text-[var(--text-secondary)] mt-[3px] m-0 leading-[1.4]">
@@ -34,7 +34,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({
             </p>
           </div>
           {!n.is_read && (
-            <span className="w-1.5 h-1.5 bg-[var(--color-cyan)] rounded-full mt-1 flex-shrink-0" />
+            <span className="w-1.5 h-1.5 bg-[var(--color-purple)] rounded-full mt-1.5 flex-shrink-0" />
           )}
         </div>
       ))}

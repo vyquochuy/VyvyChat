@@ -6,7 +6,7 @@ import { isE2EEPayload } from './useE2EE';
 import { API_ENDPOINTS } from '../config/api';
 import { SOCKET_CONFIG } from '../config/constant';
 
-export function usePresenceSocket(token: string | null, currentPage: string) {
+export function usePresenceSocket(token: string | null, userId: string | undefined, currentPage: string) {
   const friends = useChatStore((state) => state.friends);
   const activeFriendId = useChatStore((state) => state.activeFriendId);
   const setOnlineFriends = useChatStore((state) => state.setOnlineFriends);
@@ -80,19 +80,26 @@ export function usePresenceSocket(token: string | null, currentPage: string) {
             const senderId = data.sender_id;
             const message = data.message;
 
-            // Chỉ hiển thị Toast nếu đây KHÔNG phải phòng đang mở
-            if (activeFriendIdRef.current !== senderId) {
+            // Chỉ hiển thị Toast nếu đây KHÔNG phải phòng đang mở và KHÔNG phải chính mình gửi
+            if (senderId !== userId && activeFriendIdRef.current !== senderId) {
               // Tìm tên người gửi từ danh sách bạn bè
               const senderFriend = friendsRef.current.find((f: any) => f.id === senderId);
               const senderName = senderFriend?.displayName || 'Ai đó';
 
               // Cố gắng giải mã nội dung để hiển thị preview trong Toast
               let previewText = message.content;
-              if (message.type === 'TEXT' && isE2EEPayload(previewText) && e2eeState.status === 'active') {
-                try {
-                  const friendPubKey = senderFriend?.publicKey || '';
-                  previewText = await decrypt(previewText, senderId, friendPubKey, tokenVal);
-                } catch {
+              if (message.type === 'TEXT' && isE2EEPayload(previewText)) {
+                if (e2eeState.status === 'active') {
+                  try {
+                    const friendPubKey = senderFriend?.publicKey || '';
+                    previewText = await decrypt(previewText, senderId, friendPubKey, tokenVal);
+                    if (previewText.startsWith('🔒')) {
+                      previewText = '🔒 Tin nhắn mã hóa';
+                    }
+                  } catch {
+                    previewText = '🔒 Tin nhắn mã hóa';
+                  }
+                } else {
                   previewText = '🔒 Tin nhắn mã hóa';
                 }
               } else if (message.type !== 'TEXT') {
@@ -102,7 +109,7 @@ export function usePresenceSocket(token: string | null, currentPage: string) {
               // Giới hạn độ dài preview
               if (previewText.length > 50) previewText = previewText.slice(0, 47) + '...';
 
-              showToast(`💬 ${senderName}: ${previewText}`, 'info');
+              showToast(`${senderName}: ${previewText}`, 'info');
 
               // Thêm tin nhắn vào store để realtime kể cả khi không mở phòng chat
               if (senderFriend) {

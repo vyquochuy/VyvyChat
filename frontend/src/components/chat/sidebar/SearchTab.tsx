@@ -30,20 +30,20 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="flex-1 bg-[var(--bg-input)] 
-          border border-white/5 
-          rounded-lg px-3 py-2 
-          text-white text-[13px] 
+          border border-[var(--bg-card-border)] 
+          rounded-xl px-3 py-2 
+          text-[var(--text-primary)] text-[13px] 
           outline-none text-left 
-          focus:border-[var(--color-cyan)] 
-          focus:shadow-[0_0_0_2px_var(--color-cyan-glow)] 
+          focus:border-[var(--color-purple)] 
+          focus:shadow-[0_0_0_3px_var(--color-purple-glow)] 
           transition-all"
         />
         <button
           type="submit"
           disabled={isLoadingData}
-          className="bg-gradient-to-r from-[var(--color-purple)] to-[#6366f1] border-none text-white px-3 py-2 
-          rounded-lg text-xs font-bold cursor-pointer 
-          disabled:opacity-50 transition-all hover:opacity-90"
+          className="bg-[var(--color-purple)] border-none text-white px-3.5 py-2 
+          rounded-xl text-xs font-bold cursor-pointer 
+          disabled:opacity-50 transition-all hover:bg-[var(--color-cyan)] duration-150 active:scale-95"
         >
           {isLoadingData ? '...' : 'Tìm'}
         </button>
@@ -58,17 +58,17 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           searchResults.map((r) => (
             <div
               key={r.id}
-              className="bg-white/[0.02] border border-white/[0.05] px-3 py-2.5 rounded-xl flex justify-between items-center"
+              className="bg-[var(--bg-card)] border border-[var(--bg-card-border)] px-3 py-2.5 rounded-xl flex justify-between items-center shadow-sm"
             >
               <div className="text-left">
-                <div className="font-bold text-[13px]">{r.displayName}</div>
+                <div className="font-bold text-[13px] text-[var(--text-primary)]">{r.displayName}</div>
                 <div className="text-[11px] text-[var(--text-secondary)]">UID: {r.uid}</div>
               </div>
               <div>
                 {r.relationStatus === 'NONE' && (
                   <button
                     onClick={() => onSendFriendRequest(r.id)}
-                    className="bg-gradient-to-r from-[var(--color-purple)] to-[#6366f1] border-none text-white px-2 py-1 rounded-md text-[11px] font-bold cursor-pointer transition-all hover:opacity-90"
+                    className="bg-[var(--color-purple)] border-none text-white px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-all hover:bg-[var(--color-cyan)] hover:translate-y-[-1px] duration-150"
                   >
                     Kết bạn
                   </button>
@@ -76,7 +76,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                 {r.relationStatus === 'PENDING_SENT' && (
                   <button
                     disabled
-                    className="bg-white/5 border border-white/10 text-[var(--text-muted)] px-2 py-1 rounded-md text-[11px] font-bold cursor-not-allowed"
+                    className="bg-[var(--bg-input)] border border-[var(--bg-card-border)] text-[var(--text-muted)] px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-not-allowed"
                   >
                     Đã gửi
                   </button>
@@ -89,13 +89,13 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                         onRespondRequest(req.friendshipId, 'ACCEPT')
                       }
                     }}
-                    className="bg-gradient-to-r from-[var(--color-success)] to-[#059669] border-none text-white px-2 py-1 rounded-md text-[11px] font-bold cursor-pointer transition-all hover:opacity-90"
+                    className="bg-[var(--color-success)] border-none text-white px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-all hover:opacity-90 hover:translate-y-[-1px] duration-150"
                   >
                     Chấp nhận
                   </button>
                 )}
                 {r.relationStatus === 'ACCEPTED' && (
-                  <span className="bg-[rgba(16,185,129,0.1)] border border-[rgba(16,185,129,0.2)] text-[var(--color-success)] text-[10px] font-bold px-1.5 py-0.5 rounded">
+                  <span className="bg-[var(--color-success-glow)] border border-[var(--color-success)]/20 text-[var(--color-success)] text-[10px] font-bold px-1.5 py-0.5 rounded-md">
                     Bạn bè
                   </span>
                 )}

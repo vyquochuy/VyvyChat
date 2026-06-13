@@ -1,4 +1,5 @@
 import React from 'react'
+import { Avatar } from '../../Avatar'
 
 interface ContactListProps {
   filteredFriends: any[]
@@ -27,19 +28,27 @@ export const ContactList: React.FC<ContactListProps> = ({
     <div className="flex flex-col gap-1.5">
       {filteredFriends.map((f) => {
         const isActive = activeFriendId === f.id
-        const isOnline = onlineFriends[f.id]?.status === 'online'
+        const status = onlineFriends[f.id]?.status || 'offline'
         return (
           <div
             key={f.id}
             onClick={() => setActiveFriendId(f.id)}
-            className={`${isActive ? 'bg-[rgba(138,43,226,0.15)] border-[rgba(138,43,226,0.3)]' : 'bg-white/[0.02] border-white/[0.05]'} border px-3 py-2.5 rounded-xl cursor-pointer text-left transition-all duration-200 hover:bg-white/[0.05]`}
+            className={`flex items-center gap-3 border p-3 rounded-xl cursor-pointer text-left transition-all duration-150 ease-out active:scale-[0.99] hover:bg-[var(--hover-chat-item)] ${
+              isActive 
+                ? 'bg-[var(--bg-active-chat)] border-[var(--border-active-chat)] shadow-[var(--shadow-active-chat)]' 
+                : 'bg-[var(--bg-inactive-chat)] border-[var(--border-inactive-chat)]'
+            }`}
           >
-            <div className={`font-bold text-[13.5px] ${isActive ? 'text-[var(--color-cyan)]' : 'text-white'} flex items-center gap-1.5`}>
-              {f.displayName}
-              <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[var(--color-success)] shadow-[0_0_6px_var(--color-success)]' : 'bg-white/20'}`} />
-            </div>
-            <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
-              UID: {f.uid}
+            {/* Circular Pixel Avatar with Presence Overlay */}
+            <Avatar uid={f.id} status={status} sizeClass="w-9 h-9" />
+
+            <div className="flex-1 min-w-0">
+              <span className="font-bold text-[13.5px] truncate block text-[var(--text-active-chat-name)]">
+                {f.displayName}
+              </span>
+              <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
+                UID: {f.uid}
+              </div>
             </div>
           </div>
         )

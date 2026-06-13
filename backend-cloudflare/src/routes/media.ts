@@ -6,10 +6,10 @@ import { signToken, verifyToken } from '../utils/token'
 
 const media = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-// Size Limits in bytes
+// Size Limits in bytes (Adjusted for KV 25MB limit to stay safe at 15MB)
 const LIMIT_IMAGE = 10 * 1024 * 1024;    // 10MB
-const LIMIT_FILE = 50 * 1024 * 1024;     // 50MB
-const LIMIT_ZIP = 100 * 1024 * 1024;     // 100MB
+const LIMIT_FILE = 15 * 1024 * 1024;     // 15MB
+const LIMIT_ZIP = 15 * 1024 * 1024;      // 15MB
 
 // API: Yêu cầu URL upload tệp tin (Proxy Upload Session)
 media.post('/upload-url', authMiddleware, async (c) => {
@@ -43,7 +43,7 @@ media.post('/upload-url', authMiddleware, async (c) => {
     }
 
     if (file_size > maxLimit) {
-      const limitStr = maxLimit === LIMIT_IMAGE ? '10MB' : maxLimit === LIMIT_ZIP ? '100MB' : '50MB'
+      const limitStr = maxLimit === LIMIT_IMAGE ? '10MB' : '15MB'
       return c.json({ error: `Kích thước tệp vượt quá giới hạn cho phép (${limitStr}).` }, 400)
     }
 
@@ -57,15 +57,16 @@ media.post('/upload-url', authMiddleware, async (c) => {
     // 3. Tính toán SHA-256 (nếu client không gửi, ta sẽ tính sau khi upload xong)
     const sha256 = c.req.query('sha256') || ''
 
-    // 4. Tạo R2 Key độc bản
+    // 4. Tạo Storage Key độc bản
     const fileId = crypto.randomUUID()
-    const r2Key = `${fileId}-${file_name}`
+    const storageKey = `${fileId}-${file_name}`
 
     // 5. Tạo signed token có thời hạn 15 phút
     const uploadPayload = {
       action: 'upload',
-      key: r2Key,
+      key: storageKey,
       size: file_size,
+      mime_type,
       sha256,
       expires: Date.now() + 15 * 60 * 1000
     }
@@ -73,11 +74,11 @@ media.post('/upload-url', authMiddleware, async (c) => {
 
     // Lấy domain của request hiện tại để tạo upload URL chính xác
     const requestUrl = new URL(c.req.url)
-    const uploadUrl = `${requestUrl.protocol}//${requestUrl.host}/api/media/upload?key=${encodeURIComponent(r2Key)}&token=${encodeURIComponent(token)}`
+    const uploadUrl = `${requestUrl.protocol}//${requestUrl.host}/api/media/upload?key=${encodeURIComponent(storageKey)}&token=${encodeURIComponent(token)}`
 
     return c.json({
       upload_url: uploadUrl,
-      r2_key: r2Key,
+      storage_key: storageKey,
       file_id: fileId
     })
   } catch (error: any) {
@@ -85,7 +86,7 @@ media.post('/upload-url', authMiddleware, async (c) => {
   }
 })
 
-// API Proxy PUT: Nhận stream file từ Client và đẩy thẳng lên R2
+// API Proxy PUT: Nhận stream file từ Client và đẩy thẳng lên KV
 media.put('/upload', async (c) => {
   try {
     const key = c.req.query('key')
@@ -107,23 +108,24 @@ media.put('/upload', async (c) => {
       return c.json({ error: 'Kích thước tệp không khớp với dung lượng đã đăng ký.' }, 400)
     }
 
-    // 3. Đọc request body stream và ghi trực tiếp vào R2
+    // 3. Đọc request body stream và ghi trực tiếp vào KV
     if (!c.req.raw.body) {
       return c.json({ error: 'Không nhận được dữ liệu tệp tin.' }, 400)
     }
 
-    await c.env.MEDIA_BUCKET.put(key, c.req.raw.body, {
-      customMetadata: {
-        sha256: payload.sha256 || ''
+    await c.env.MEDIA_KV.put(key, c.req.raw.body, {
+      metadata: {
+        sha256: payload.sha256 || '',
+        mimeType: payload.mime_type || 'application/octet-stream'
       }
     })
 
     return c.json({
       success: true,
-      message: 'Tải tệp lên R2 thành công.'
+      message: 'Tải tệp lên KV thành công.'
     })
   } catch (error: any) {
-    return c.json({ error: 'Lỗi ghi tệp lên R2: ' + error.message }, 500)
+    return c.json({ error: 'Lỗi ghi tệp lên KV: ' + error.message }, 500)
   }
 })
 
@@ -132,17 +134,18 @@ media.get('/download-url', authMiddleware, async (c) => {
   try {
     const id = c.req.query('id')
     const r2Key = c.req.query('r2Key')
+    const storageKey = c.req.query('storageKey') || r2Key
 
-    if (!id && !r2Key) {
-      return c.json({ error: 'Thiếu ID tệp tin hoặc R2 Key.' }, 400)
+    if (!id && !storageKey) {
+      return c.json({ error: 'Thiếu ID tệp tin hoặc Storage Key.' }, 400)
     }
 
     // 1. Kiểm tra trong DB
     let attachment: any = null
     if (id) {
       attachment = await c.env.DB.prepare('SELECT * FROM attachments WHERE id = ?').bind(id).first()
-    } else if (r2Key) {
-      attachment = await c.env.DB.prepare('SELECT * FROM attachments WHERE r2_key = ?').bind(r2Key).first()
+    } else if (storageKey) {
+      attachment = await c.env.DB.prepare('SELECT * FROM attachments WHERE storage_key = ?').bind(storageKey).first()
     }
 
     if (!attachment) {
@@ -167,13 +170,13 @@ media.get('/download-url', authMiddleware, async (c) => {
     // 3. Tạo signed download token có hiệu lực trong 10 phút
     const downloadPayload = {
       action: 'download',
-      key: attachment.r2_key,
+      key: attachment.storage_key,
       expires: Date.now() + 10 * 60 * 1000
     }
     const token = await signToken(downloadPayload, c.env.JWT_SECRET || 'fallback-secret')
 
     const requestUrl = new URL(c.req.url)
-    const downloadUrl = `${requestUrl.protocol}//${requestUrl.host}/api/media/download?key=${encodeURIComponent(attachment.r2_key)}&token=${encodeURIComponent(token)}`
+    const downloadUrl = `${requestUrl.protocol}//${requestUrl.host}/api/media/download?key=${encodeURIComponent(attachment.storage_key)}&token=${encodeURIComponent(token)}`
 
     // Tăng lượt tải của file đính kèm này ở background
     c.executionCtx.waitUntil(
@@ -192,7 +195,7 @@ media.get('/download-url', authMiddleware, async (c) => {
   }
 })
 
-// API Proxy GET: Stream file từ R2 trả về cho Client
+// API Proxy GET: Stream file từ KV trả về cho Client
 media.get('/download', async (c) => {
   try {
     const key = c.req.query('key')
@@ -208,27 +211,30 @@ media.get('/download', async (c) => {
       return c.json({ error: 'Token tải xuống không hợp lệ hoặc đã hết hạn.' }, 403)
     }
 
-    // 2. Lấy file từ R2
-    const obj = await c.env.MEDIA_BUCKET.get(key)
-    if (!obj) {
+    // 2. Lấy file từ KV
+    const { value, metadata } = await c.env.MEDIA_KV.getWithMetadata<{ sha256: string, mimeType?: string }>(key, { type: 'stream' })
+    if (!value) {
       return c.json({ error: 'Tệp tin không tồn tại hoặc đã bị xóa.' }, 404)
     }
 
     // 3. Trả về Response stream file đính kèm với Content-Disposition
     const headers = new Headers()
-    obj.writeHttpMetadata(headers)
-    headers.set('etag', obj.httpEtag)
+    if (metadata?.mimeType) {
+      headers.set('Content-Type', metadata.mimeType)
+    } else {
+      headers.set('Content-Type', 'application/octet-stream')
+    }
     
     // Trích xuất tên tệp tin gốc (bỏ UUID prefix)
     const fileName = key.substring(37) // uuid (36) + '-' (1)
     headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`)
     headers.set('Access-Control-Expose-Headers', 'Content-Disposition')
 
-    return new Response(obj.body, {
+    return new Response(value, {
       headers
     })
   } catch (error: any) {
-    return c.json({ error: 'Lỗi tải tệp tin từ R2: ' + error.message }, 500)
+    return c.json({ error: 'Lỗi tải tệp tin từ KV: ' + error.message }, 500)
   }
 })
 

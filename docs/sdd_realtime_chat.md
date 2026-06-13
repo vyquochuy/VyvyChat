@@ -612,9 +612,9 @@ Giao diện áp dụng Responsive Grid Layout:
 * Kiểm tra luồng Reset Encryption và xoay vòng khóa.
 * Đảm bảo máy chủ không thể đọc được nội dung tin nhắn trong bất kỳ trường hợp nào.
 
-### Phase 8: chỉnh sửa giao diện người dùng
+### Phase 7: chỉnh sửa giao diện người dùng
 
-* **Mục Tiêu**: Nâng cao trải nghiệm người dùng bằng việc thêm ảnh đại diện và chế độ tối.
+* **Mục Tiêu**: Nâng cao trải nghiệm người dùng bằng việc thêm ảnh đại diện và chế độ sáng.
 * **Thời gian dự kiến**: Tuần 8.
 * **Deliverables**:
   * Thêm ảnh đại diện cho người dùng(mặc định hoặc chọn từ máy người dùng).
@@ -622,8 +622,35 @@ Giao diện áp dụng Responsive Grid Layout:
   * ảnh đại diện của bạn bè hiển thị trên danh sách.
   * chức năng chuyển đổi giao diện(sáng, tối)
 
-### Phase 9: dashboard 
+### Phase 8: dashboard
 
+* **Mục Tiêu**: Xây dựng hệ thống dashboard để quản lý và theo dõi hiệu suất, bảo mật và người dùng của nền tảng.
+* **Thời gian dự kiến**: Tuần 8.
+* **Deliverables**:
+  * **Trang tổng quan (Overview)**:
+    * Hiển thị số liệu thống kê về người dùng: tổng số, đang hoạt động, trực tuyến.
+    * Thống kê hoạt động: số tin nhắn gửi trong ngày, số file được tải lên.
+    * Thông tin về các phòng chat đang hoạt động.
+  * **Quản lý người dùng (User Management)**:
+    * Danh sách tất cả người dùng với khả năng tìm kiếm, lọc và xem chi tiết.
+    * Xem lịch sử hoạt động, thông tin thiết bị, và trạng thái bảo mật của từng người dùng.
+    * Chức năng khóa/mở tài khoản, yêu cầu xác minh lại (re-verification).
+  * **Bảo mật & Giám sát (Security & Monitoring)**:
+    * Bảng điều khiển cảnh báo: phát hiện hoạt động bất thường, địa chỉ IP đáng ngờ.
+    * Xem nhật ký hệ thống (system logs) và các cảnh báo bảo mật theo thời gian thực.
+    * Theo dõi hiệu suất của server: độ trễ WebSocket, tỷ lệ lỗi, tài nguyên sử dụng.
+  * **Quản lý tệp (File Management)**:
+    * Danh sách các tệp đã được tải lên hệ thống.
+    * Xem chi tiết tệp: chủ sở hữu, kích thước, thời gian tải lên, kết quả quét virus.
+    * Chức năng xóa tệp và xem lại lịch sử quét virus.
+  * **Phân tích & Báo cáo (Analytics & Reporting)**:
+    * Biểu đồ tăng trưởng người dùng, mức độ tương tác.
+    * Báo cáo về hoạt động của hệ thống theo ngày, tuần, tháng.
+    * Xuất báo cáo dưới định dạng PDF hoặc Excel.
+  * **Cấu hình hệ thống (System Settings)**:
+    * Cấu hình các thông số bảo mật: giới hạn rate limit, thời gian lưu trữ dữ liệu.
+    * Quản lý cấu hình Cloudflare Workers và Durable Objects.
+    * Thiết lập các quy tắc cảnh báo và thông báo.
 
 ### Phase Cuối: Hoàn thiện, Tối ưu & Đóng gói (Refinement & Deployment)
 

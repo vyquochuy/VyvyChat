@@ -8,7 +8,8 @@ import { verifyMagicBytes } from './utils/verifyMagicBytes'
 export async function queueConsumer(batch: MessageBatch<any>, env: Env, ctx: ExecutionContext) {
   for (const message of batch.messages) {
     try {
-      const { attachmentId, r2Key, fileName, mimeType, conversationId } = message.body;
+      const { attachmentId, storageKey, r2Key, fileName, mimeType, conversationId } = message.body;
+      const key = storageKey || r2Key;
       console.log(`[Queue Scanner] Bắt đầu quét file: ${fileName} (${attachmentId})`);
       
       let scanStatus = 'CLEAN';
@@ -19,14 +20,13 @@ export async function queueConsumer(batch: MessageBatch<any>, env: Env, ctx: Exe
         scanStatus = 'INFECTED';
         console.warn(`[Queue Scanner] Phát hiện từ khóa độc hại trong tên file: ${fileName}`);
       } else {
-        // 2. Xác thực Magic Bytes
-        const r2Object = await env.MEDIA_BUCKET.get(r2Key, { range: { offset: 0, length: 8 } });
-        if (!r2Object) {
+        // 2. Xác thực Magic Bytes từ KV
+        const buffer = await env.MEDIA_KV.get(key, { type: 'arrayBuffer' });
+        if (!buffer) {
           scanStatus = 'INFECTED';
-          console.error(`[Queue Scanner] Không tìm thấy file trên R2: ${r2Key}`);
+          console.error(`[Queue Scanner] Không tìm thấy file trên KV: ${key}`);
         } else {
-          const buffer = await r2Object.arrayBuffer();
-          const bytes = new Uint8Array(buffer);
+          const bytes = new Uint8Array(buffer.slice(0, 8));
           const isConsistent = await verifyMagicBytes(bytes, mimeType, fileName);
           if (!isConsistent) {
             scanStatus = 'INFECTED';
@@ -43,16 +43,17 @@ export async function queueConsumer(batch: MessageBatch<any>, env: Env, ctx: Exe
         .bind(scanStatus, attachmentId)
         .run();
 
-      // 5. Nếu độc hại, xóa file khỏi R2
+      // 5. Nếu độc hại, xóa file khỏi KV và xóa dòng trong bảng attachments
       if (scanStatus === 'INFECTED') {
-        await env.MEDIA_BUCKET.delete(r2Key);
-        console.log(`[Queue Scanner] Đã xóa file nhiễm độc khỏi R2: ${r2Key}`);
+        await env.MEDIA_KV.delete(key);
+        await env.DB.prepare('DELETE FROM attachments WHERE id = ?').bind(attachmentId).run();
+        console.log(`[Queue Scanner] Đã xóa file nhiễm độc khỏi KV và DB: ${key}`);
       } else {
         console.log(`[Queue Scanner] File sạch: ${fileName}`);
       }
 
       // 6. Broadcast cập nhật trạng thái qua Durable Object
-      if (conversationId) {
+      if (conversationId && scanStatus !== 'INFECTED') {
         try {
           const doId = env.CONVERSATION_DO.idFromName(conversationId);
           const doStub = env.CONVERSATION_DO.get(doId);

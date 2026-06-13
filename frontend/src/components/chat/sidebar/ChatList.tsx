@@ -1,5 +1,7 @@
 import React from 'react'
 import { Message } from '../../../store/chatStore'
+import { Avatar } from '../../Avatar'
+import { isE2EEPayload } from '../../../hooks/useE2EE'
 
 interface ChatListProps {
   filteredChatFriends: any[]
@@ -32,25 +34,43 @@ export const ChatList: React.FC<ChatListProps> = ({
         const msgs = messages[f.id] || []
         const lastMsg = msgs[msgs.length - 1]
         const isActive = activeFriendId === f.id
-        const isOnline = onlineFriends[f.id]?.status === 'online'
+        const status = onlineFriends[f.id]?.status || 'offline'
+
+        // Trích xuất text preview và lọc mã hóa E2EE nếu chưa giải mã
+        let previewText = 'Bắt đầu cuộc trò chuyện...'
+        if (lastMsg) {
+          if (lastMsg.type === 'TEXT') {
+            previewText = isE2EEPayload(lastMsg.content) ? '🔒 Tin nhắn mã hóa' : lastMsg.content
+          } else {
+            previewText = `Đã gửi ${lastMsg.type === 'IMAGE' ? 'một ảnh' : 'một tệp tin'}`
+          }
+        }
 
         return (
           <div
             key={f.id}
             onClick={() => setActiveFriendId(f.id)}
-            className={`${isActive ? 'bg-[rgba(138,43,226,0.15)] border-[rgba(138,43,226,0.3)]' : 'bg-white/[0.02] border-white/[0.05]'} border px-3 py-2.5 rounded-xl cursor-pointer text-left transition-all duration-200 hover:bg-white/[0.05]`}
+            className={`flex items-center gap-3 border p-3 rounded-xl cursor-pointer text-left transition-all duration-150 ease-out active:scale-[0.99] hover:bg-[var(--hover-chat-item)] ${
+              isActive 
+                ? 'bg-[var(--bg-active-chat)] border-[var(--border-active-chat)] shadow-[var(--shadow-active-chat)]' 
+                : 'bg-[var(--bg-inactive-chat)] border-[var(--border-inactive-chat)]'
+            }`}
           >
-            <div className="flex justify-between items-center">
-              <span className={`font-bold text-[13.5px] ${isActive ? 'text-[var(--color-cyan)]' : 'text-white'} flex items-center gap-1.5`}>
-                {f.displayName}
-                <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[var(--color-success)] shadow-[0_0_6px_var(--color-success)]' : 'bg-white/20'}`} />
-              </span>
-              <span className="text-[10px] text-[var(--text-muted)]">
-                {lastMsg ? new Date(lastMsg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}
-              </span>
-            </div>
-            <div className="text-xs text-[var(--text-secondary)] mt-1 overflow-hidden text-ellipsis whitespace-nowrap">
-              {lastMsg ? `${lastMsg.senderId === 'current-user' ? 'Bạn: ' : ''}${lastMsg.content}` : 'Bắt đầu cuộc trò chuyện...'}
+            {/* Circular Pixel Avatar with Presence Overlay */}
+            <Avatar uid={f.id} status={status} sizeClass="w-9 h-9" />
+
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-baseline">
+                <span className="font-bold text-[13.5px] truncate text-[var(--text-active-chat-name)]">
+                  {f.displayName}
+                </span>
+                <span className="text-[10px] text-[var(--text-muted)] flex-shrink-0 ml-1">
+                  {lastMsg ? new Date(lastMsg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}
+                </span>
+              </div>
+              <div className="text-xs text-[var(--text-secondary)] mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap">
+                {lastMsg && lastMsg.senderId === 'current-user' ? 'Bạn: ' : ''}{previewText}
+              </div>
             </div>
           </div>
         )

@@ -25,7 +25,7 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
   ]
 
   return (
-    <div className="flex border-b border-[var(--bg-card-border)] bg-black/10 py-0.5 px-1 overflow-x-auto whitespace-nowrap">
+    <div className="flex border-b border-[var(--bg-card-border)] bg-transparent py-0.5 px-1 overflow-x-auto whitespace-nowrap">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id
         return (
@@ -39,7 +39,7 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
           >
             {tab.label}
             {tab.count !== undefined && tab.count > 0 && (
-              <span className={`absolute top-[1px] right-[1px] ${tab.id === 'notifications' ? 'bg-[var(--color-cyan)]' : 'bg-[var(--color-error)]'} text-[#070813] text-[8px] font-bold rounded-full w-[13px] h-[13px] flex items-center justify-center`}>
+              <span className={`absolute top-[1px] right-[1px] ${tab.id === 'notifications' ? 'bg-[var(--color-cyan)]' : 'bg-[var(--color-error)]'} text-[var(--color-counter-text)] text-[8px] font-bold rounded-full w-[13px] h-[13px] flex items-center justify-center`}>
                 {tab.count}
               </span>
             )}

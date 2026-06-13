@@ -12,12 +12,15 @@ id = "3527581d81da47a384c0552561579574" # ID thực tế của KV trên Cloudfla
 [[d1_databases]]
 binding = "DB"
 database_name = "vivychat-db"
-database_id = "f86be2e4-e0c2-40f4-a4f6-ef41725b8492"
+database_id = "58e2975c-5989-4ea4-8223-1708dc186e20"
 
-# Binds a Cloudflare R2 Bucket
-[[r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "vivychat-media"
+# Binds a Cloudflare KV Namespace to your Worker for file storage
+[[kv_namespaces]]
+binding = "MEDIA_KV"
+id = "eadf064bbf954f80b31cd79270c8bce8"
+
+[triggers]
+crons = ["0 0 * * *"]
 
 # Binds a Cloudflare Queue as Producer
 [[queues.producers]]
@@ -42,5 +45,5 @@ bindings = [
 
 [[migrations]]
 tag = "v2"
-new_classes = ["ConversationDO", "UserPresenceDO"]
+new_sqlite_classes = ["ConversationDO", "UserPresenceDO"]
  

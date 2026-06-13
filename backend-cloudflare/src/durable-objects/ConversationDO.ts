@@ -101,7 +101,7 @@ export class ConversationDO implements DurableObject {
               file_name: att.file_name,
               file_size: att.file_size,
               mime_type: att.mime_type,
-              r2_key: att.r2_key,
+              storage_key: att.storage_key || att.r2_key,
               sha256: att.sha256 || null,
               thumbnail_key: att.thumbnail_key || null,
               scan_status: 'PENDING',
@@ -114,7 +114,7 @@ export class ConversationDO implements DurableObject {
             for (const att of newMsg.attachments) {
               await this.env.VIRUS_SCAN_QUEUE.send({
                 attachmentId: att.id,
-                r2Key: att.r2_key,
+                storageKey: att.storage_key,
                 fileName: att.file_name,
                 mimeType: att.mime_type,
                 conversationId: data.conversation_id
@@ -283,14 +283,14 @@ export class ConversationDO implements DurableObject {
           for (const att of msg.attachments) {
             statements.push(
               this.env.DB.prepare(
-                'INSERT INTO attachments (id, message_id, file_name, file_size, mime_type, r2_key, sha256, thumbnail_key, download_count, scan_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                'INSERT INTO attachments (id, message_id, file_name, file_size, mime_type, storage_key, sha256, thumbnail_key, download_count, scan_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
               ).bind(
                 att.id,
                 att.message_id,
                 att.file_name,
                 att.file_size,
                 att.mime_type,
-                att.r2_key,
+                att.storage_key || att.r2_key,
                 att.sha256,
                 att.thumbnail_key,
                 0,

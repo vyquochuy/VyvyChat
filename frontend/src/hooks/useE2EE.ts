@@ -63,7 +63,7 @@ export function useSecretChat(userId: string) {
 
   // ── Tạo mới cặp khoá và đăng ký lên server ─────────────────────────────
 
-  const setupEncryption = useCallback(async (token: string, recoveryPassword: string): Promise<boolean> => {
+  const setupEncryption = useCallback(async (token: string, recoveryPassword: string, otp?: string): Promise<boolean> => {
     try {
       // 1. Sinh cặp khoá ECDH P-256
       const keyPair = await crypto.subtle.generateKey(
@@ -96,7 +96,8 @@ export function useSecretChat(userId: string) {
           publicKey: pubJwkStr,
           encryptedPrivateKey,
           recoverySalt: salt,
-          keyVersion: serverKeyVersion
+          keyVersion: serverKeyVersion,
+          otp
         })
       })
       if (!setupRes.ok) throw new Error('Setup key API failed')
@@ -183,7 +184,7 @@ export function useSecretChat(userId: string) {
 
   // ── Reset / Xoay vòng khóa ─────────────────────────────────────────────
 
-  const resetEncryption = useCallback(async (token: string, newRecoveryPassword: string): Promise<boolean> => {
+  const resetEncryption = useCallback(async (token: string, newRecoveryPassword: string, otp: string): Promise<boolean> => {
     // Xóa khóa cũ trong IndexedDB trước khi tạo mới
     await idbDelete(`e2ee:${userId}`)
     sharedKeyCache.current.clear()
@@ -193,7 +194,7 @@ export function useSecretChat(userId: string) {
     const oldVersion = e2eeState.keyVersion
     setE2EEState({ status: 'active', keyVersion: oldVersion })
 
-    return setupEncryption(token, newRecoveryPassword)
+    return setupEncryption(token, newRecoveryPassword, otp)
   }, [userId, e2eeState.keyVersion, setupEncryption])
 
   // ── Lấy hoặc tính Shared Key với một người bạn ─────────────────────────

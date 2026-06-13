@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: `${BACKEND_URL}/api/auth/reset-password`,
     KEYS: `${BACKEND_URL}/api/auth/keys`,
     KEYS_SETUP: `${BACKEND_URL}/api/auth/keys/setup`,
+    KEYS_SEND_OTP: `${BACKEND_URL}/api/auth/keys/send-otp`,
   },
   USERS: {
     PRESENCE: (idsString: string) => `${BACKEND_URL}/api/users/presence?ids=${idsString}`,
@@ -31,7 +32,7 @@ export const API_ENDPOINTS = {
   },
   MEDIA: {
     UPLOAD_URL: `${BACKEND_URL}/api/media/upload-url`,
-    DOWNLOAD_URL: (r2Key: string) => `${BACKEND_URL}/api/media/download-url?r2Key=${encodeURIComponent(r2Key)}`,
+    DOWNLOAD_URL: (storageKey: string) => `${BACKEND_URL}/api/media/download-url?storageKey=${encodeURIComponent(storageKey)}`,
   },
   WS: {
     PRESENCE: (token: string) => {

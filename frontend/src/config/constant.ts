@@ -1,7 +1,7 @@
 export const FILE_LIMITS = {
   IMAGE: 10 * 1024 * 1024,   // 10MB
-  ZIP: 100 * 1024 * 1024,    // 100MB
-  DEFAULT: 50 * 1024 * 1024, // 50MB
+  ZIP: 15 * 1024 * 1024,     // 15MB
+  DEFAULT: 15 * 1024 * 1024, // 15MB
 };
 
 export const SOCKET_CONFIG = {

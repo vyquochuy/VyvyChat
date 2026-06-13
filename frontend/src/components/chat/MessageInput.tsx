@@ -14,21 +14,27 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
   const [uploadFileName, setUploadFileName] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimerRef = useRef<any>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Lấy sendTypingStatus từ context Socket
   const { sendTypingStatus } = useSocket()
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = (e?: React.FormEvent | React.KeyboardEvent) => {
+    if (e) e.preventDefault()
     if (!value.trim()) return
     // Tắt typing indicator ngay khi gửi
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
     sendTypingStatus(false)
     onSendMessage(value.trim())
     setValue('')
+
+    // Reset height of textarea
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+    }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value)
     // Gửi tín hiệu đang gõ phím
     sendTypingStatus(true)
@@ -37,6 +43,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
     typingTimerRef.current = setTimeout(() => {
       sendTypingStatus(false)
     }, SOCKET_CONFIG.TYPING_DEBOUNCE_MS)
+
+    // Auto-grow height up to 120px
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
+    }
   }
 
   const handleAttachmentClick = () => {
@@ -61,7 +80,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
 
     const maxLimit = isImage ? FILE_LIMITS.IMAGE : isZip ? FILE_LIMITS.ZIP : FILE_LIMITS.DEFAULT
     if (file.size > maxLimit) {
-      const limitStr = isImage ? '10MB' : isZip ? '100MB' : '50MB'
+      const limitStr = isImage ? '10MB' : '15MB'
       alert(`Kích thước tệp tin vượt quá giới hạn cho phép (${limitStr}).`)
       return
     }
@@ -96,7 +115,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
         throw new Error(errData.error || 'Yêu cầu tải lên thất bại.')
       }
 
-      const { upload_url, r2_key } = (await response.json()) as { upload_url: string; r2_key: string }
+      const { upload_url, storage_key } = (await response.json()) as { upload_url: string; storage_key: string }
 
       // 4. Upload file bằng XHR để theo dõi tiến trình
       const xhr = new XMLHttpRequest()
@@ -123,7 +142,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
               file_name: file.name,
               file_size: file.size,
               mime_type: file.type || 'application/octet-stream',
-              r2_key: r2_key,
+              storage_key: storage_key,
               sha256
             }]
           )
@@ -160,7 +179,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
   return (
     <form
       onSubmit={handleSubmit}
-      className="relative py-3 px-4 border-t border-[var(--bg-card-border)] flex gap-2 items-center bg-black/10"
+      className="relative py-3 px-4 border-t border-[var(--bg-card-border)] flex gap-2.5 items-end bg-[var(--bg-primary)]"
     >
       {/* Hidden File Input */}
       <input
@@ -173,11 +192,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
 
       {/* Progress Bar Overlay */}
       {uploadProgress !== null && (
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/5 overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-[var(--bg-card-border)] overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-[var(--color-purple)] to-[var(--color-cyan)] transition-all duration-150"
+            className="h-full bg-[var(--color-purple)] transition-all duration-150"
+            style={{ width: `${uploadProgress}%` }}
           />
-          <div className="absolute top-[3px] left-4 text-[10px] text-white/50 bg-black/80 px-2 py-0.5 rounded-b-md">
+          <div className="absolute top-[3px] left-4 text-[10px] text-[var(--text-secondary)] bg-[var(--bg-card)] border border-[var(--bg-card-border)] px-2.5 py-0.5 rounded-b-md shadow-sm">
             Đang tải lên: {uploadFileName} ({uploadProgress}%)
           </div>
         </div>
@@ -188,7 +208,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
         type="button"
         onClick={handleAttachmentClick}
         disabled={uploadProgress !== null}
-        className="bg-none border-none text-[var(--text-muted)] hover:text-white cursor-pointer p-1.5 flex items-center justify-center rounded-full transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="bg-none border-none text-[var(--text-muted)] hover:text-[var(--color-purple)] cursor-pointer p-1.5 flex items-center justify-center rounded-full transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed mb-[3px]"
         title="Gửi tệp đính kèm"
       >
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -196,31 +216,35 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
         </svg>
       </button>
 
-      {/* Input Field */}
-      <input
-        type="text"
+      {/* Text Area Input */}
+      <textarea
+        ref={textareaRef}
+        rows={1}
         placeholder={uploadProgress !== null ? "Vui lòng đợi tải lên..." : "Nhập tin nhắn..."}
         value={value}
-        onChange={handleInputChange}
+        onChange={handleTextAreaChange}
+        onKeyDown={handleKeyDown}
         disabled={uploadProgress !== null}
-        className="flex-1 bg-[var(--bg-input)] 
-        border border-white/5 rounded-[20px] px-[18px] py-[10px] text-white text-sm outline-none text-left 
-        focus:border-[var(--color-cyan)] 
-        focus:shadow-[0_0_0_2px_var(--color-cyan-glow)] 
+        className="flex-1 bg-[var(--bg-input)] min-w-0 max-h-[120px] resize-none overflow-y-auto
+        border border-[var(--bg-card-border)] rounded-[20px] px-[18px] py-[10px] text-[var(--text-primary)] text-sm outline-none text-left 
+        focus:border-[var(--color-purple)] 
+        focus:shadow-[0_0_0_3px_var(--color-purple-glow)] 
         transition-all duration-200 disabled:opacity-50"
+        style={{ height: 'auto' }}
       />
 
-      {/* Send Button */}
+      {/* Redesigned Circular Send Button */}
       <button
         type="submit"
         disabled={!value.trim() || uploadProgress !== null}
-        className={`border-none px-4 py-2.5 rounded-[20px] text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${value.trim() && uploadProgress === null
-          ? 'bg-gradient-to-r from-[var(--color-purple)] to-[#6366f1] text-white cursor-pointer hover:opacity-90'
-          : 'bg-white/[0.03] text-[var(--text-muted)] cursor-not-allowed'
-          }`}
+        className={`border-none w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+          value.trim() && uploadProgress === null
+            ? 'bg-[var(--bg-message-outgoing)] text-[var(--text-message-outgoing)] cursor-pointer hover:opacity-90 active:scale-95'
+            : 'bg-[var(--bg-input)] border border-[var(--bg-card-border)] text-[var(--text-muted)] cursor-not-allowed'
+        }`}
+        title="Gửi tin nhắn"
       >
-        <span>Gửi</span>
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-[1px] mt-[0.5px]">
           <line x1="22" y1="2" x2="11" y2="13" />
           <polygon points="22 2 15 22 11 13 2 9 22 2" />
         </svg>

@@ -2,6 +2,27 @@
 
 Tài liệu này lưu trữ lịch sử thay đổi tổng quát của dự án **VivyChat** qua các giai đoạn phát triển.
 
+## [2026-06-13] - Hệ thống Avatar Vector Chibi & Tối ưu Giao diện Chat (Phase 8)
+
+### Thêm mới (Added)
+*   Triển khai bộ sinh ảnh đại diện bằng đồ họa vector SVG (`circle`, `ellipse`, `path`, `polygon`, `rect`) động phía máy khách trong `avatar.ts`.
+*   Tích hợp 6 hình mẫu chibi mascot đa dạng: Mèo, Gấu (gồm Panda), Thỏ gặm cà rốt, Cáo đuôi trắng, Slime vương miện và Anime Girl mắt to.
+*   Cài đặt bộ băm chuỗi UID (`hashString`) và giải thuật số ngẫu nhiên hạt giống tuyến tính đồng dư LCG (`SeededRandom`) để đảm bảo avatar hiển thị nhất quán trên mọi thiết bị.
+*   Triển khai bộ đệm Map runtime cache lưu trữ data-URI của SVG để tối ưu hóa hiệu năng render.
+*   Thiết kế dải phân cách ngày thân thiện dạng lịch (Hôm nay, Hôm qua, Thứ Hai - Chủ Nhật) tự động chuyển tiếp giữa các ngày.
+*   Tạo màn hình chờ Shimmer xương (Skeleton Loader) của cả Avatar và Bong bóng tin nhắn song song mô phỏng theo Discord.
+*   Bổ sung phím tắt: gõ `Enter` để gửi tin nhắn nhanh và `Shift + Enter` để tạo dòng mới trong ô chat.
+
+### Thay đổi (Changed)
+*   Mở rộng tỷ lệ hiển thị khung chat trên desktop lên mức rộng tối đa `1440px`, `95vw` và chiều cao `85vh` có giới hạn tỷ lệ.
+*   Tự động tối ưu hóa hiển thị tràn toàn màn hình (`100dvh`) trên giao diện di động.
+*   Ẩn thanh header và footer trang chủ khi đã đăng nhập thành công. Di chuyển profile người dùng và nút đăng xuất xuống Discord-style footer của Sidebar.
+*   Redesign nút gửi tin nhắn thành hình tròn chứa icon máy bay giấy nhỏ gọn. Chuyển đổi khung nhập liệu sang Textarea tự động co giãn chiều cao (max 120px).
+*   Gom nhóm các tin nhắn liên tiếp gửi trong vòng 10 phút, tự động duỗi thẳng các góc cạnh của bong bóng phía người gửi để tạo hiệu ứng xếp chồng.
+*   Tự động ngắt khối tin nhắn khi có tệp đính kèm hoặc tin nhắn hệ thống, và che giấu mã khóa E2EE thô trên Toast thông báo thành `🔒 Tin nhắn mã hóa`.
+
+---
+
 ## [2026-06-05] - Giao diện Chat cơ bản & Quản lý trạng thái Client (Phase 3)
 
 ### Thêm mới (Added)

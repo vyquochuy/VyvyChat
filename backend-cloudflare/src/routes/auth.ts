@@ -5,7 +5,7 @@ import { AuthService } from '../services/authService'
 
 const auth = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-// API: Gửi mã OTP về Email (Rate Limit: Tối đa 3 lần/15 phút)
+// API: Gửi mã OTP về Email
 auth.post('/send-otp', async (c) => {
   try {
     const { email } = await c.req.json<{ email: string }>()
@@ -119,15 +119,30 @@ auth.post('/reset-password', async (c) => {
   }
 })
 
+// API: Gửi mã OTP xác thực trước khi xoay vòng cặp khóa E2EE
+auth.post('/keys/send-otp', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user')
+    const result = await AuthService.sendOtpKeyRotate(c.env, user.email)
+    if (!result.success) {
+      return c.json({ error: result.error }, (result.status as any) || 500)
+    }
+    return c.json({ message: result.message })
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
 // API: Thiết lập hoặc xoay vòng cặp khóa E2EE của người dùng hiện tại
 auth.post('/keys/setup', authMiddleware, async (c) => {
   try {
     const user = c.get('user')
-    const { publicKey, encryptedPrivateKey, recoverySalt, keyVersion } = await c.req.json<{
+    const { publicKey, encryptedPrivateKey, recoverySalt, keyVersion, otp } = await c.req.json<{
       publicKey: string
       encryptedPrivateKey: string
       recoverySalt: string
       keyVersion: number
+      otp?: string
     }>()
 
     if (!publicKey || !encryptedPrivateKey || !recoverySalt || !keyVersion) {
@@ -138,11 +153,12 @@ auth.post('/keys/setup', authMiddleware, async (c) => {
       publicKey,
       encryptedPrivateKey,
       recoverySalt,
-      keyVersion
+      keyVersion,
+      otp
     })
 
     if (!result.success) {
-      return c.json({ error: result.error }, (result.status as any) || 500)
+      return c.json({ error: result.error }, (result.status as any) || 400)
     }
 
     return c.json({ message: 'Thiết lập khóa mã hóa thành công.', keyVersion: result.keyVersion })
