@@ -6,7 +6,7 @@ import { signToken, verifyToken } from '../utils/token'
 
 const media = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-// Size Limits in bytes (Adjusted for KV 25MB limit to stay safe at 15MB)
+// Size Limits in bytes
 const LIMIT_IMAGE = 10 * 1024 * 1024;    // 10MB
 const LIMIT_FILE = 15 * 1024 * 1024;     // 15MB
 const LIMIT_ZIP = 15 * 1024 * 1024;      // 15MB

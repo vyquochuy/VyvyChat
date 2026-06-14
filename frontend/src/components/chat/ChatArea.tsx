@@ -70,6 +70,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage, token, onTogg
           <Avatar uid={activeFriend.id} status={onlineFriends[activeFriendId]?.status || 'offline'} sizeClass="w-9 h-9" />
 
           {/* Friend Details */}
+          
           <div className="text-left">
             <h3 className="text-[14px] font-bold text-[var(--text-primary)] m-0 leading-tight">
               {activeFriend.displayName}
