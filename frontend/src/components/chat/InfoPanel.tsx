@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Avatar } from '../Avatar'
 import { API_ENDPOINTS } from '../../config/api'
+import { useChatStore } from '../../store/chatStore'
 
 interface InfoPanelProps {
   friend: {
@@ -79,6 +80,8 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
   setTheme
 }) => {
   const [copied, setCopied] = useState(false)
+  const onlineFriends = useChatStore((state) => state.onlineFriends)
+  const status = onlineFriends[friend.id]?.status || 'offline'
 
   // Filter image attachments from chat messages
   const chatImages: string[] = []
@@ -124,13 +127,19 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
 
       {/* Main Avatar & Status Info */}
       <div className="p-6 flex flex-col items-center border-b border-[var(--bg-card-border)] bg-[var(--bg-card)]">
-        <Avatar uid={friend.id} status="online" sizeClass="w-20 h-20" />
+        <Avatar uid={friend.id} status={status} sizeClass="w-20 h-20" />
         <h3 className="mt-3.5 text-[16px] font-bold text-[var(--text-primary)] m-0 leading-tight text-center">
           {friend.displayName}
         </h3>
+        {status === 'online' ? (
         <span className="mt-1.5 text-[11px] text-[var(--color-success)] font-semibold bg-[var(--color-success-glow)] px-2.5 py-0.5 rounded-full select-none">
           Đang hoạt động
         </span>
+        ) : (
+          <span className="mt-1.5 text-[11px] text-[var(--color-danger)] font-semibold bg-[var(--color-danger-glow)] px-2.5 py-0.5 rounded-full select-none">
+            Đang offline
+          </span>
+        )}
 
         {/* Action icons grid */}
         <div className="flex justify-center gap-4 mt-6 w-full">
@@ -151,7 +160,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
             </button>
-            <span className="text-[10px] text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] font-medium">Báo thức</span>
+            <span className="text-[10px] text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] font-medium">Tắt Thông báo</span>
           </div>
 
           <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
