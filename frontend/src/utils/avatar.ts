@@ -460,8 +460,9 @@ export function generateVectorAvatarSvg(uid: string): string {
     // Head base
     characterLayer += `<circle cx="20" cy="22" r="8.5" fill="${skinColor}" />`;
 
-    // Bangs and hair locks
+    // Bangs, hair cap, and locks
     characterLayer += `
+      <path d="M11,21 A 9,9 0 0 1 29,21 Z" fill="${hairColor}" />
       <path d="M10,18.5 L9.5,27 L11.5,27 Z" fill="${hairColor}" />
       <path d="M30,18.5 L30.5,27 L28.5,27 Z" fill="${hairColor}" />
       <path d="M9.5,19 Q15,14 20,18 Q25,14 30.5,19 L30.5,21.5 Q20,20 9.5,21.5 Z" fill="${hairColor}" />
