@@ -5,6 +5,8 @@ import { useConversationSocket } from '../hooks/useConversationSocket';
 interface SocketContextType {
   handleSendMessage: (content: string, typeMsg?: 'TEXT' | 'IMAGE' | 'FILE', attachments?: any[]) => void;
   sendTypingStatus: (isTyping: boolean) => void;
+  handleRecallMessage: (messageId: string) => void;
+  handleForwardMessage: (targetFriendId: string, message: any, decryptedBuffer?: ArrayBuffer) => Promise<void>;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -19,10 +21,10 @@ export const SocketProvider: React.FC<{
   usePresenceSocket(token, user?.id, currentPage);
 
   // Activate conversation socket hook and get sendMessage + typing callbacks
-  const { handleSendMessage, sendTypingStatus } = useConversationSocket(token, user, currentPage);
+  const { handleSendMessage, sendTypingStatus, handleRecallMessage, handleForwardMessage } = useConversationSocket(token, user, currentPage);
 
   return (
-    <SocketContext.Provider value={{ handleSendMessage, sendTypingStatus }}>
+    <SocketContext.Provider value={{ handleSendMessage, sendTypingStatus, handleRecallMessage, handleForwardMessage }}>
       {children}
     </SocketContext.Provider>
   );

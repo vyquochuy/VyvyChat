@@ -71,56 +71,57 @@
 }
 
 [data-theme="dark"] {
-  /* --- DARK THEME (MILLENNIUM BLUE) --- */
-  --bg-primary: #0A1128;
-  --bg-sidebar-custom: #0F1A3A;
-  --bg-card: #111E4A;
-  --bg-card-border: #1E2A5D;
-  --bg-input: #111E4A;
-  --bg-input-focus: #15255C;
+  /* --- DARK THEME (MIDNIGHT CYBER) --- */
+  --bg-primary: #0B0F19;          /* Đen xám sâu */
+  --bg-sidebar-custom: #111827;   /* Xám nighthawk */
+  --bg-card: #1F2937;             /* Đỉnh lớp cao hơn, nổi bật cấu trúc */
+  --bg-card-border: #374151;
+  --bg-input: #111827;
+  --bg-input-focus: #1F2937;
 
-  --text-primary: #EAF2FF;
-  --text-secondary: #B7C5E0;
-  --text-muted: #7E8BAF;
-  --color-counter-text: #0A1128;
+  --text-primary: #F9FAFB;        /* Trắng nguyên bản mượt */
+  --text-secondary: #9CA3AF;      /* Xám trung tính rõ chữ */
+  --text-muted: #6B7280;
+  --color-counter-text: #0B0F19;
 
   /* Brand Accent Colors */
-  --color-purple: #7C5CFF;
-  --color-purple-glow: rgba(124, 92, 255, 0.15);
-  --color-cyan: #7C5CFF;
-  --color-cyan-glow: rgba(124, 92, 255, 0.15);
+  --color-purple: #818CF8;
+  --color-purple-glow: rgba(129, 140, 248, 0.15);
+  --color-cyan: #22D3EE;
+  --color-cyan-glow: rgba(34, 211, 238, 0.15);
   --color-success: #34D399;
   --color-success-neon: #34D399;
   --color-success-glow: rgba(52, 211, 153, 0.15);
-  --color-error: #FB7185;
-  --color-error-glow: rgba(251, 113, 133, 0.15);
+  --color-error: #F87171;
+  --color-error-glow: rgba(248, 113, 113, 0.15);
 
-  --bg-chat-custom: #0A1128;
-  --bg-message-incoming: #111E4A;
-  --text-message-incoming: #EAF2FF;
-  --bg-message-outgoing: linear-gradient(135deg, #7C5CFF 0%, #6B49FF 100%);
+  --bg-chat-custom: #0B0F19;
+  --bg-message-incoming: #1F2937;
+  --text-message-incoming: #F9FAFB;
+  /* Tin nhắn đi mang màu xanh thương hiệu nguyên bản phối nhẹ tím neon */
+  --bg-message-outgoing: linear-gradient(135deg, #5380F1 0%, #7C5CFF 100%);
   --text-message-outgoing: #FFFFFF;
-  --border-message-incoming: #1E2A5D;
+  --border-message-incoming: #374151;
   --shadow-message-incoming: none;
-  --shadow-message-outgoing: none;
+  --shadow-message-outgoing: 0 4px 12px rgba(124, 92, 255, 0.15);
 
-  --bg-active-chat: rgba(124, 92, 255, 0.12);
-  --border-active-chat: rgba(124, 92, 255, 0.25);
+  --bg-active-chat: rgba(83, 128, 241, 0.16);
+  --border-active-chat: rgba(83, 128, 241, 0.3);
   --shadow-active-chat: none;
-  --text-active-chat-name: #7C5CFF;
-  --hover-chat-item: rgba(255, 255, 255, 0.04);
-  --bg-inactive-chat: rgba(255, 255, 255, 0.01);
-  --border-inactive-chat: rgba(255, 255, 255, 0.02);
-  --bg-header-glass: rgba(10, 17, 40, 0.85);
+  --text-active-chat-name: #38BDF8;
+  --hover-chat-item: rgba(255, 255, 255, 0.02);
+  --bg-inactive-chat: transparent;
+  --border-inactive-chat: transparent;
+  --bg-header-glass: rgba(11, 15, 25, 0.85);
 
   /* Scrollbar custom variables */
-  --scrollbar-thumb: rgba(124, 92, 255, 0.25);
-  --scrollbar-thumb-hover: rgba(124, 92, 255, 0.4);
+  --scrollbar-thumb: rgba(156, 163, 175, 0.2);
+  --scrollbar-thumb-hover: rgba(156, 163, 175, 0.35);
 
   /* Toast variables */
-  --bg-toast: rgba(18, 20, 38, 0.85);
+  --bg-toast: #1F2937;
   --text-toast: var(--text-primary);
-  --shadow-toast: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-toast: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 body {
@@ -1038,4 +1039,4 @@ body {
 
 .chat-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
-}
+}

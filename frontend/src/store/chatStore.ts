@@ -18,6 +18,11 @@ export interface Message {
   timestamp: number
   type: 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
   attachments?: Attachment[]
+  isE2EE?: boolean
+  message_state?: 'NORMAL' | 'EDITED' | 'RECALLED'
+  decryptedFileBuffer?: ArrayBuffer
+  originalFileName?: string
+  originalMimeType?: string
 }
 
 interface ChatState {
@@ -35,7 +40,12 @@ interface ChatState {
   updatePresence: (friendId: string, status: string, lastSeen?: number) => void
   setOnlineFriends: (presenceMap: Record<string, { status: string; lastSeen?: number }>) => void
   updateAttachmentStatus: (friendId: string, attachmentId: string, status: string) => void
+  recallMessage: (friendId: string, messageId: string) => void
   setTyping: (friendId: string, isTyping: boolean) => void
+  pinnedMessages: Record<string, Message | null>
+  pinMessage: (friendId: string, message: Message | null) => void
+  pendingForwardMessage: Message | null
+  setPendingForwardMessage: (message: Message | null) => void
   clearStore: () => void
 }
 
@@ -46,6 +56,8 @@ export const useChatStore = create<ChatState>((set) => ({
   onlineFriends: {},
   typingFriends: {},
   friends: [],
+  pinnedMessages: {},
+  pendingForwardMessage: null,
 
   addMessage: (friendId, messageOrContent, senderId) =>
     set((state) => {
@@ -137,6 +149,29 @@ export const useChatStore = create<ChatState>((set) => ({
       }
     }),
 
+  recallMessage: (friendId, messageId) =>
+    set((state) => {
+      const friendMessages = state.messages[friendId] || []
+      const updatedMessages = friendMessages.map((msg) => {
+        if (msg.id === messageId) {
+          return {
+            ...msg,
+            content: 'Tin nhắn đã bị thu hồi',
+            type: 'TEXT' as const,
+            attachments: [],
+            message_state: 'RECALLED' as const
+          }
+        }
+        return msg
+      })
+      return {
+        messages: {
+          ...state.messages,
+          [friendId]: updatedMessages
+        }
+      }
+    }),
+
   setTyping: (friendId, isTyping) =>
     set((state) => ({
       typingFriends: {
@@ -152,6 +187,18 @@ export const useChatStore = create<ChatState>((set) => ({
       messages: {},
       onlineFriends: {},
       typingFriends: {},
-      friends: []
-    })
+      friends: [],
+      pinnedMessages: {},
+      pendingForwardMessage: null
+    }),
+
+  pinMessage: (friendId, message) =>
+    set((state) => ({
+      pinnedMessages: {
+        ...state.pinnedMessages,
+        [friendId]: message
+      }
+    })),
+
+  setPendingForwardMessage: (pendingForwardMessage) => set({ pendingForwardMessage })
 }))

@@ -77,6 +77,78 @@ export class ConversationDO implements DurableObject {
           return
         }
 
+        // ============================================================
+        // Recall Message: Thu hồi tin nhắn đã gửi từ cả 2 phía
+        // ============================================================
+        if (data.type === 'recall_message') {
+          const { messageId, conversation_id } = data
+          if (!messageId || !conversation_id) return
+
+          // 1. Kiểm tra D1 trước (hoặc cache) xem tin nhắn có thuộc cuộc hội thoại và do chính user gửi không
+          const msg = await this.env.DB.prepare(
+            'SELECT sender_id, message_state FROM messages WHERE id = ? AND conversation_id = ?'
+          ).bind(messageId, conversation_id).first<{ sender_id: string; message_state: string }>()
+
+          let isOwner = false
+
+          if (msg) {
+            isOwner = msg.sender_id === userId
+            if (isOwner && msg.message_state !== 'RECALLED') {
+              // Cập nhật D1
+              await this.env.DB.prepare(
+                "UPDATE messages SET message_state = 'RECALLED', content = 'Tin nhắn đã bị thu hồi', type = 'TEXT' WHERE id = ?"
+              ).bind(messageId).run()
+
+              // Tìm và xóa tệp đính kèm trong D1 & KV
+              const attachments = await this.env.DB.prepare(
+                'SELECT storage_key FROM attachments WHERE message_id = ?'
+              ).bind(messageId).all<{ storage_key: string }>()
+
+              if (attachments.results && attachments.results.length > 0) {
+                for (const att of attachments.results) {
+                  if (att.storage_key) {
+                    this.state.waitUntil(this.env.MEDIA_KV.delete(att.storage_key).catch(() => {}))
+                  }
+                }
+                await this.env.DB.prepare('DELETE FROM attachments WHERE message_id = ?').bind(messageId).run()
+              }
+            }
+          } else {
+            // Kiểm tra trong write-behind cache (chưa được flush xuống D1)
+            const cachedIdx = this.messageCache.findIndex(m => m.id === messageId && m.conversation_id === conversation_id)
+            if (cachedIdx !== -1) {
+              const cachedMsg = this.messageCache[cachedIdx]
+              isOwner = cachedMsg.sender_id === userId
+              if (isOwner && cachedMsg.message_state !== 'RECALLED') {
+                cachedMsg.message_state = 'RECALLED'
+                cachedMsg.content = 'Tin nhắn đã bị thu hồi'
+                cachedMsg.type = 'TEXT'
+                if (cachedMsg.attachments && cachedMsg.attachments.length > 0) {
+                  for (const att of cachedMsg.attachments) {
+                    const key = att.storage_key || att.r2_key
+                    if (key) {
+                      this.state.waitUntil(this.env.MEDIA_KV.delete(key).catch(() => {}))
+                    }
+                  }
+                  cachedMsg.attachments = []
+                }
+                // Cập nhật lại trong DO storage để đồng bộ
+                await this.state.storage.put(messageId, cachedMsg)
+              }
+            }
+          }
+
+          if (isOwner) {
+            // Broadcast sự kiện thu hồi
+            this.broadcast({
+              type: 'message_recalled',
+              messageId,
+              conversation_id
+            })
+          }
+          return
+        }
+
         if (data.type === 'message') {
           const msgId = crypto.randomUUID()
           const timestamp = Date.now()

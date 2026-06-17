@@ -98,3 +98,62 @@ export async function deriveSharedKey(myPrivateKey: CryptoKey, theirPublicKeyJwk
     ['encrypt', 'decrypt']
   );
 }
+
+/** Mã hóa ArrayBuffer bằng khóa AES-GCM, trả về ArrayBuffer chứa [IV (12 bytes) + Ciphertext]. */
+export async function encryptBuffer(buffer: ArrayBuffer, key: CryptoKey): Promise<ArrayBuffer> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const cipherBuf = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    buffer
+  );
+  const combined = new Uint8Array(iv.byteLength + cipherBuf.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(cipherBuf), iv.byteLength);
+  return combined.buffer;
+}
+
+/** Giải mã ArrayBuffer [IV (12 bytes) + Ciphertext] bằng khóa AES-GCM, trả về ArrayBuffer thô. */
+export async function decryptBuffer(combinedBuffer: ArrayBuffer, key: CryptoKey): Promise<ArrayBuffer> {
+  const view = new Uint8Array(combinedBuffer);
+  const iv = view.slice(0, 12);
+  const ciphertext = view.slice(12);
+  return crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    ciphertext
+  );
+}
+
+/** Mã hóa chuỗi bằng khóa AES-GCM, trả về chuỗi hex dạng [IV(24 ký tự hex) + CiphertextHex]. */
+export async function encryptString(text: string, key: CryptoKey): Promise<string> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder();
+  const cipherBuf = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    enc.encode(text)
+  );
+  return bufToHex(iv.buffer as ArrayBuffer) + bufToHex(cipherBuf);
+}
+
+/** Giải mã chuỗi hex [IV(24 ký tự hex) + CiphertextHex] bằng khóa AES-GCM. */
+export async function decryptString(encryptedHex: string, key: CryptoKey): Promise<string> {
+  if (encryptedHex.length < 24) return encryptedHex;
+  const ivHex = encryptedHex.slice(0, 24);
+  const cipherHex = encryptedHex.slice(24);
+  try {
+    const iv = hexToBuf(ivHex);
+    const cipherBuf = hexToBuf(cipherHex);
+    const plainBuf = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      cipherBuf
+    );
+    return new TextDecoder().decode(plainBuf);
+  } catch (e) {
+    console.error('[Crypto] Giải mã chuỗi thất bại:', e);
+    return encryptedHex;
+  }
+}
+

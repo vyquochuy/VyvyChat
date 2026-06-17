@@ -12,7 +12,7 @@ interface ChatAreaProps {
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage, token, onToggleInfoPanel, showInfoPanel }) => {
-  const { activeFriendId, friends, messages, addMessage, setActiveFriendId, onlineFriends, typingFriends } = useChatStore()
+  const { activeFriendId, friends, messages, addMessage, setActiveFriendId, onlineFriends, typingFriends, pinnedMessages, pinMessage } = useChatStore()
 
   // Find selected friend details
   const activeFriend = friends.find((f) => f.id === activeFriendId)
@@ -134,6 +134,45 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ onSendMessage, token, onTogg
           </button>
         </div>
       </div>
+
+      {/* Pinned Message Bar */}
+      {(() => {
+        const pinnedMsg = activeFriendId ? pinnedMessages[activeFriendId] : null;
+        if (!pinnedMsg) return null;
+        return (
+          <div 
+            onClick={() => {
+              document.getElementById(`msg-${pinnedMsg.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+            className="px-4 py-2 bg-[var(--bg-card)] border-b border-[var(--bg-card-border)] flex items-center justify-between cursor-pointer hover:bg-[var(--hover-chat-item)] transition-colors select-none"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--color-purple)" strokeWidth="2.5" className="flex-shrink-0 animate-bounce">
+                <path d="M12 2v8M18 10H6M16 10v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-8" />
+              </svg>
+              <div className="text-left min-w-0">
+                <p className="text-[11px] font-bold text-[var(--color-purple)] m-0 leading-tight">Tin nhắn đã ghim</p>
+                <p className="text-[12px] text-[var(--text-secondary)] m-0 truncate leading-normal mt-0.5">
+                  {pinnedMsg.type === 'TEXT' ? pinnedMsg.content : pinnedMsg.type === 'IMAGE' ? '[Hình ảnh]' : '[Tệp đính kèm]'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                pinMessage(activeFriendId || '', null);
+              }}
+              className="text-[var(--text-muted)] hover:text-red-500 bg-transparent border-none cursor-pointer p-1 rounded-full hover:bg-[var(--hover-chat-item)] flex items-center justify-center flex-shrink-0"
+              title="Bỏ ghim tin nhắn"
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        );
+      })()}
 
       {/* Message List area */}
       <MessageList messages={friendMsgs} token={token} />

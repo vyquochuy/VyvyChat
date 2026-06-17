@@ -2,6 +2,9 @@ import React, { useState, useRef } from 'react'
 import { API_ENDPOINTS } from '../../config/api'
 import { FILE_LIMITS, SOCKET_CONFIG } from '../../config/constant'
 import { useSocket } from '../../providers/SocketProvider'
+import { useChatStore } from '../../store/chatStore'
+import { useSecretChatContext } from '../../providers/SecretChatProvider'
+import { encryptBuffer, encryptString } from '../../utils/crypto'
 
 interface MessageInputProps {
   onSendMessage: (content: string, typeMsg?: 'TEXT' | 'IMAGE' | 'FILE', attachments?: any[]) => void
@@ -15,6 +18,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimerRef = useRef<any>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const { activeFriendId, friends } = useChatStore()
+  const { e2eeState, getSharedKey } = useSecretChatContext()
 
   // Lấy sendTypingStatus từ context Socket
   const { sendTypingStatus } = useSocket()
@@ -89,9 +95,30 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
     setUploadProgress(0)
 
     try {
+      let uploadBuffer = await file.arrayBuffer()
+      let uploadFileName = file.name
+      let uploadMimeType = file.type || 'application/octet-stream'
+      let uploadSize = file.size
+      let isE2EE = e2eeState.status === 'active' && !!activeFriendId
+
+      if (isE2EE) {
+        const activeFriend = friends.find(f => f.id === activeFriendId)
+        const friendPubKey = activeFriend?.publicKey || ''
+        const friendKeyVersion = activeFriend?.keyVersion ?? 1
+        const sharedKey = await getSharedKey(activeFriendId!, friendPubKey, token || undefined, friendKeyVersion)
+        if (sharedKey) {
+          const encrypted = await encryptBuffer(uploadBuffer, sharedKey)
+          uploadBuffer = encrypted
+          uploadSize = encrypted.byteLength
+          uploadFileName = await encryptString(file.name, sharedKey)
+          uploadMimeType = await encryptString(file.type || 'application/octet-stream', sharedKey)
+        } else {
+          isE2EE = false // fallback
+        }
+      }
+
       // 2. Tính SHA-256 của file bằng Web Crypto API
-      const buffer = await file.arrayBuffer()
-      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer)
+      const hashBuffer = await crypto.subtle.digest('SHA-256', uploadBuffer)
       const hashArray = Array.from(new Uint8Array(hashBuffer))
       const sha256 = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 
@@ -103,9 +130,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          file_name: file.name,
-          file_size: file.size,
-          mime_type: file.type || 'application/octet-stream',
+          file_name: uploadFileName,
+          file_size: uploadSize,
+          mime_type: uploadMimeType,
           sha256
         })
       })
@@ -139,9 +166,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
             `Đã gửi tệp đính kèm: ${file.name}`,
             typeMsg,
             [{
-              file_name: file.name,
-              file_size: file.size,
-              mime_type: file.type || 'application/octet-stream',
+              file_name: uploadFileName,
+              file_size: uploadSize,
+              mime_type: uploadMimeType,
               storage_key: storage_key,
               sha256
             }]
@@ -164,7 +191,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, token
         setUploadFileName('')
       }
 
-      xhr.send(file)
+      xhr.send(uploadBuffer)
 
     } catch (err: any) {
       alert(err.message)

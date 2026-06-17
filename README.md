@@ -14,6 +14,7 @@ Dự án đảm bảo tính riêng tư (Zero-Knowledge) nhờ việc tự thỏa
 Hệ thống của VivyChat được phát triển và vận hành dựa trên sự kết hợp giữa kiến trúc biên đám mây (Edge Computing) và các tiêu chuẩn bảo mật mật mã học hiện đại.
 
 ### Các tính năng cốt lõi:
+
 - **Xác thực OTP Email bảo mật:** Quy trình đăng ký và khôi phục mật khẩu thông qua mã OTP 6 chữ số gửi qua email (sử dụng Google Apps Script làm webhook gửi mail), đi kèm cơ chế Rate Limiting chống spam và khóa tài khoản khi nhập sai OTP quá 5 lần.
 - **Mã hóa đầu cuối (E2EE) mặc định:** Sử dụng thuật toán trao đổi khóa ECDH P-256 để thỏa thuận Shared Secret và mã hóa tin nhắn bằng AES-256-GCM trực tiếp ở client. Máy chủ trung gian chỉ chuyển tiếp ciphertext và không có khả năng đọc thô tin nhắn.
 - **Cô lập khóa đa tài khoản trên cùng thiết bị:** Khóa E2EE được lưu dưới dạng đối tượng gộp không thể trích xuất (`extractable: false`) trong IndexedDB có cấu trúc `e2ee:${userId}`, ngăn ngừa rò rỉ hoặc ghi đè khóa chéo giữa các phiên đăng nhập khác nhau trên cùng trình duyệt.
@@ -23,6 +24,7 @@ Hệ thống của VivyChat được phát triển và vận hành dựa trên s
 ---
 
 ## Table of Contents
+
 1. [Project Description](#project-description)
 2. [How to Install and Run the Project](#how-to-install-and-run-the-project)
 3. [How to Use the Project](#how-to-use-the-project)
@@ -38,31 +40,40 @@ Hệ thống của VivyChat được phát triển và vận hành dựa trên s
 Dự án được tổ chức dưới dạng monorepo chứa cả mã nguồn Frontend và Backend Cloudflare Workers.
 
 ### Yêu cầu hệ thống:
+
 - [Node.js](https://nodejs.org/) v18 trở lên.
 - [Cloudflare Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) cài đặt toàn cục hoặc chạy qua `npx`.
 
 ### 1. Cài đặt dependencies
+
 Tại thư mục gốc của dự án, chạy lệnh sau để cài đặt toàn bộ dependencies cho cả frontend và backend:
+
 ```bash
 npm run install:all
 ```
 
 ### 2. Thiết lập cơ sở dữ liệu D1 nội bộ (Local DB)
+
 Di chuyển vào thư mục backend và chạy migrations để khởi tạo cấu trúc cơ sở dữ liệu SQLite cục bộ:
+
 ```bash
 cd backend-cloudflare
 npx wrangler d1 migrations apply vivychat-db --local
 ```
 
 ### 3. Chạy Backend (Local Dev)
+
 Chạy server backend cục bộ mô phỏng Cloudflare Workers & Durable Objects tại cổng `8787`:
+
 ```bash
 # Tại thư mục backend-cloudflare hoặc chạy lệnh ở gốc monorepo:
 npm run dev
 ```
 
 ### 4. Chạy Frontend (Vite Dev Server)
+
 Mở một terminal mới, chuyển vào thư mục frontend và chạy Vite development server tại cổng `5173`:
+
 ```bash
 # Tại thư mục frontend hoặc chạy lệnh ở gốc monorepo:
 npm run dev
@@ -73,14 +84,17 @@ npm run dev
 ## How to Use the Project
 
 ### 1. Đăng ký & Kích hoạt tài khoản
+
 - Truy cập giao diện tại `http://localhost:5173`.
 - Điền email nhận mã OTP. Sau khi mã OTP được gửi về hòm thư, điền mã OTP và thông tin tài khoản để hoàn thành đăng ký.
 
 ### 2. Thiết lập mã hóa đầu cuối (E2EE)
+
 - Sau khi đăng nhập, di chuyển sang tab Bảo mật (biểu tượng 🔒) trên thanh Sidebar.
 - Nhập mật khẩu khôi phục khóa (Recovery Password - tối thiểu 8 ký tự). Nhấp **Setup Encryption** để sinh cặp khóa mật mã. Khóa công khai của bạn sẽ được tải lên server, còn khóa bí mật sẽ được lưu an toàn trong IndexedDB của trình duyệt.
 
 ### 3. Kết bạn và Nhắn tin bảo mật
+
 - Di chuyển sang tab **Tìm** để tìm kiếm bạn bè thông qua UID hoặc email.
 - Nhấp **Kết bạn**. Sau khi đối phương chấp nhận lời mời, hai người có thể nhấp vào tên nhau để bắt đầu cuộc trò chuyện.
 - Trình duyệt sẽ tự động thực hiện tính toán Shared Secret với khóa công khai của đối phương và mã hóa tất cả tin nhắn gửi đi dưới dạng AES-GCM. Bạn sẽ thấy chỉ báo đang gõ phím (Typing Indicator) và nhận thông báo Toast thời gian thực khi có tin nhắn mới từ người khác.
@@ -92,7 +106,9 @@ npm run dev
 Dự án sử dụng TypeScript nghiêm ngặt và Vite để kiểm thử tính khả thi của mã nguồn.
 
 ### 1. Kiểm tra biên dịch TypeScript
+
 Kiểm tra tĩnh xem mã nguồn có lỗi kiểu dữ liệu nào không bằng cách chạy:
+
 ```bash
 # Kiểm tra frontend
 npm run build --prefix frontend
@@ -102,24 +118,10 @@ npx wrangler dev --prefix backend-cloudflare
 ```
 
 ### 2. Kiểm thử thủ công luồng E2EE đa thiết bị
+
 - **Bước 1:** Đăng nhập Tài khoản A trên Trình duyệt 1 (ví dụ Chrome), thiết lập E2EE thành công và gửi tin nhắn.
 - **Bước 2:** Đăng nhập Tài khoản B trên Trình duyệt 2 (ví dụ Firefox), thiết lập E2EE và phản hồi tin nhắn.
 - **Bước 3:** Đăng xuất và đăng nhập tài khoản khác trên cùng trình duyệt để xác minh khóa cũ không bị lấy nhầm hay đọc trộm (Multi-account isolation).
-
----
-
-## How to Contribute to the Project
-
-Mọi đóng góp cho dự án đều được chào đón. Quy trình đóng góp diễn ra như sau:
-
-1. **Fork** dự án này về tài khoản cá nhân của bạn.
-2. Tạo một nhánh mới từ `master` để thực hiện sửa đổi:
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. Commit các thay đổi của bạn với thông điệp rõ ràng theo chuẩn Conventional Commits (ví dụ: `feat(ui): add new encryption status indicators`).
-4. Kiểm tra biên dịch thành công (`npm run build`) trước khi đẩy code.
-5. Thực hiện **Push** nhánh lên Fork của bạn và tạo một **Pull Request** giải trình rõ ràng các nội dung chỉnh sửa để được phê duyệt.
 
 ---
 
@@ -137,4 +139,4 @@ Dự án VivyChat chân thành cảm ơn các công nghệ, thư viện nguồn 
 
 ## Add a License
 
-Dự án VivyChat được phân phối và cấp phép dưới **Giấy phép MIT** (MIT License). Xem chi tiết điều khoản sử dụng trong tệp tin `LICENSE` nếu có.
+Dự án được phân phối và cấp phép dưới **Giấy phép MIT** (MIT License). Xem chi tiết điều khoản sử dụng trong tệp tin `LICENSE` nếu có.
